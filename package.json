@@ -1,0 +1,53 @@
+{
+  "name": "fp-core",
+  "version": "0.1.0",
+  "description": "Functional programming primitives for TypeScript — Result, Option, pipe, compose, async utilities. Zero dependencies.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsc",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "functional",
+    "fp",
+    "result",
+    "either",
+    "option",
+    "maybe",
+    "pipe",
+    "compose",
+    "curry",
+    "typescript",
+    "monad",
+    "zero-dependency"
+  ],
+  "author": "roxdavirox",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/roxdavirox/fp-core.git"
+  },
+  "bugs": {
+    "url": "https://github.com/roxdavirox/fp-core/issues"
+  },
+  "homepage": "https://github.com/roxdavirox/fp-core#readme",
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@vitest/coverage-v8": "^3.0.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.0.0"
+  }
+}

@@ -1,0 +1,401 @@
+/**
+ * Result/Either type for functional error handling
+ * Inspired by Rust's Result<T, E> and Haskell's Either
+ * @module result
+ */
+
+// ============================================================================
+// RESULT TYPE
+// ============================================================================
+
+/**
+ * Result type - represents success (Ok) or failure (Err)
+ */
+export type Result<T, E = Error> = { ok: true; value: T } | { ok: false; error: E };
+
+// ============================================================================
+// CONSTRUCTORS
+// ============================================================================
+
+/**
+ * Creates a successful Result
+ *
+ * @example
+ * const result = Ok(42);
+ * // { ok: true, value: 42 }
+ */
+export const Ok = <T, E = Error>(value: T): Result<T, E> => ({
+  ok: true,
+  value,
+});
+
+/**
+ * Creates a failed Result
+ *
+ * @example
+ * const result = Err(new Error('Failed'));
+ * // { ok: false, error: Error(...) }
+ */
+export const Err = <T, E = Error>(error: E): Result<T, E> => ({
+  ok: false,
+  error,
+});
+
+// ============================================================================
+// TYPE GUARDS
+// ============================================================================
+
+/**
+ * Checks if Result is Ok
+ */
+export const isOk = <T, E>(result: Result<T, E>): result is { ok: true; value: T } =>
+  result.ok === true;
+
+/**
+ * Checks if Result is Err
+ */
+export const isErr = <T, E>(result: Result<T, E>): result is { ok: false; error: E } =>
+  result.ok === false;
+
+// ============================================================================
+// TRANSFORMATIONS
+// ============================================================================
+
+/**
+ * Map over Result value (only if Ok)
+ *
+ * @example
+ * const result = Ok(5);
+ * const doubled = mapResult((x: number) => x * 2)(result);
+ * // Ok(10)
+ */
+export const mapResult =
+  <T, R, E>(fn: (value: T) => R) =>
+  (result: Result<T, E>): Result<R, E> =>
+    isOk(result) ? Ok(fn(result.value)) : result;
+
+/**
+ * Map over Result error (only if Err)
+ *
+ * @example
+ * const result = Err(new Error('Failed'));
+ * const mapped = mapErr((e: Error) => e.message)(result);
+ * // Err('Failed')
+ */
+export const mapErr =
+  <T, E, F>(fn: (error: E) => F) =>
+  (result: Result<T, E>): Result<T, F> =>
+    isErr(result) ? Err(fn(result.error)) : result;
+
+/**
+ * FlatMap (bind/chain) - permite encadear operações que retornam Result
+ *
+ * @example
+ * const divide = (x: number, y: number): Result<number, string> =>
+ *   y === 0 ? Err('Division by zero') : Ok(x / y);
+ *
+ * const result = flatMap((x: number) => divide(x, 2))(Ok(10));
+ * // Ok(5)
+ */
+export const flatMap =
+  <T, R, E>(fn: (value: T) => Result<R, E>) =>
+  (result: Result<T, E>): Result<R, E> =>
+    isOk(result) ? fn(result.value) : result;
+
+/**
+ * Alias for flatMap
+ */
+export const andThen = flatMap;
+
+/**
+ * Unwrap - extrai valor ou lança erro
+ *
+ * @example
+ * unwrap(Ok(42)); // 42
+ * unwrap(Err(new Error('Failed'))); // Throws Error
+ */
+export const unwrap = <T, E>(result: Result<T, E>): T => {
+  if (isOk(result)) {
+    return result.value;
+  }
+  throw result.error;
+};
+
+/**
+ * UnwrapOr - extrai valor ou retorna default
+ *
+ * @example
+ * unwrapOr(0)(Ok(42)); // 42
+ * unwrapOr(0)(Err(new Error('Failed'))); // 0
+ */
+export const unwrapOr =
+  <T, E>(defaultValue: T) =>
+  (result: Result<T, E>): T =>
+    isOk(result) ? result.value : defaultValue;
+
+/**
+ * UnwrapOrElse - extrai valor ou computa default
+ *
+ * @example
+ * const getDefault = (e: Error) => {
+ *   console.error(e);
+ *   return 0;
+ * };
+ * unwrapOrElse(getDefault)(result);
+ */
+export const unwrapOrElse =
+  <T, E>(fn: (error: E) => T) =>
+  (result: Result<T, E>): T =>
+    isOk(result) ? result.value : fn(result.error);
+
+/**
+ * Match - pattern matching sobre Result
+ *
+ * @example
+ * const result = Ok(42);
+ * const message = match(
+ *   (value) => `Success: ${value}`,
+ *   (error) => `Error: ${error}`
+ * )(result);
+ * // 'Success: 42'
+ */
+export const match =
+  <T, E, R>(onOk: (value: T) => R, onErr: (error: E) => R) =>
+  (result: Result<T, E>): R =>
+    isOk(result) ? onOk(result.value) : onErr(result.error);
+
+// ============================================================================
+// COMBINATORS
+// ============================================================================
+
+/**
+ * Combines two Results - both must be Ok
+ *
+ * @example
+ * const r1 = Ok(5);
+ * const r2 = Ok(10);
+ * const combined = combineTwo((a, b) => a + b)(r1, r2);
+ * // Ok(15)
+ */
+export const combineTwo =
+  <T1, T2, R, E>(fn: (v1: T1, v2: T2) => R) =>
+  (r1: Result<T1, E>, r2: Result<T2, E>): Result<R, E> => {
+    if (isErr(r1)) return r1;
+    if (isErr(r2)) return r2;
+    return Ok(fn(r1.value, r2.value));
+  };
+
+/**
+ * Combines array of Results - all must be Ok
+ *
+ * @example
+ * const results = [Ok(1), Ok(2), Ok(3)];
+ * const combined = combineAll(results);
+ * // Ok([1, 2, 3])
+ */
+export const combineAll = <T, E>(results: Array<Result<T, E>>): Result<T[], E> => {
+  const values: T[] = [];
+
+  for (const result of results) {
+    if (isErr(result)) {
+      return result;
+    }
+    values.push(result.value);
+  }
+
+  return Ok(values);
+};
+
+/**
+ * Collects all errors from an array of Results
+ *
+ * @example
+ * const results = [Ok(1), Err('e1'), Ok(2), Err('e2')];
+ * const combined = collectErrors(results);
+ * // Err(['e1', 'e2']) se houver erros
+ * // Ok([1, 2]) se todos Ok
+ */
+export const collectErrors = <T, E>(results: Array<Result<T, E>>): Result<T[], E[]> => {
+  const values: T[] = [];
+  const errors: E[] = [];
+
+  for (const result of results) {
+    if (isOk(result)) {
+      values.push(result.value);
+    } else {
+      errors.push(result.error);
+    }
+  }
+
+  return errors.length > 0 ? Err(errors) : Ok(values);
+};
+
+// ============================================================================
+// ASYNC UTILITIES
+// ============================================================================
+
+/**
+ * Converts a Promise to a Result
+ *
+ * @example
+ * const result = await fromPromise(fetch('/api/data'));
+ * // Ok(response) ou Err(error)
+ */
+export const fromPromise = async <T, E = Error>(promise: Promise<T>): Promise<Result<T, E>> => {
+  try {
+    const value = await promise;
+    return Ok(value);
+  } catch (error) {
+    return Err(error as E);
+  }
+};
+
+/**
+ * Converts a throwing function into one that returns Result
+ *
+ * @example
+ * const divide = (x: number, y: number) => {
+ *   if (y === 0) throw new Error('Division by zero');
+ *   return x / y;
+ * };
+ *
+ * const safeDivide = tryCatch(divide);
+ * safeDivide(10, 0); // Err(Error('Division by zero'))
+ * safeDivide(10, 2); // Ok(5)
+ */
+export const tryCatch =
+  <T extends unknown[], R, E = Error>(fn: (...args: T) => R) =>
+  (...args: T): Result<R, E> => {
+    try {
+      return Ok(fn(...args));
+    } catch (error) {
+      return Err(error as E);
+    }
+  };
+
+/**
+ * Async version of tryCatch
+ *
+ * @example
+ * const fetchUser = async (id: string) => {
+ *   const res = await fetch(`/users/${id}`);
+ *   if (!res.ok) throw new Error('Not found');
+ *   return res.json();
+ * };
+ *
+ * const safeFetch = tryCatchAsync(fetchUser);
+ * await safeFetch('123'); // Result<User, Error>
+ */
+export const tryCatchAsync =
+  <T extends unknown[], R, E = Error>(fn: (...args: T) => Promise<R>) =>
+  async (...args: T): Promise<Result<R, E>> => {
+    try {
+      const value = await fn(...args);
+      return Ok(value);
+    } catch (error) {
+      return Err(error as E);
+    }
+  };
+
+/**
+ * Async map over Result
+ *
+ * @example
+ * const result = Ok(5);
+ * const doubled = await mapResultAsync(async (x: number) => x * 2)(result);
+ * // Ok(10)
+ */
+export const mapResultAsync =
+  <T, R, E>(fn: (value: T) => Promise<R>) =>
+  async (result: Result<T, E>): Promise<Result<R, E>> =>
+    isOk(result) ? Ok(await fn(result.value)) : result;
+
+/**
+ * Async FlatMap over Result
+ *
+ * @example
+ * const fetchUser = async (id: string): Promise<Result<User, Error>> => {
+ *   // ...
+ * };
+ *
+ * const result = Ok('user-123');
+ * const user = await flatMapAsync(fetchUser)(result);
+ */
+export const flatMapAsync =
+  <T, R, E>(fn: (value: T) => Promise<Result<R, E>>) =>
+  async (result: Result<T, E>): Promise<Result<R, E>> =>
+    isOk(result) ? fn(result.value) : result;
+
+// ============================================================================
+// VALIDATION UTILITIES
+// ============================================================================
+
+/**
+ * Creates a validator that returns Result
+ *
+ * @example
+ * const validateAge = (age: number): Result<number, string> =>
+ *   age >= 18 ? Ok(age) : Err('Must be 18 or older');
+ *
+ * validateAge(25); // Ok(25)
+ * validateAge(15); // Err('Must be 18 or older')
+ */
+export type Validator<T, E = string> = (value: T) => Result<T, E>;
+
+/**
+ * Combines multiple validators - all must pass
+ *
+ * @example
+ * const isPositive: Validator<number> = (x) =>
+ *   x > 0 ? Ok(x) : Err('Must be positive');
+ *
+ * const isEven: Validator<number> = (x) =>
+ *   x % 2 === 0 ? Ok(x) : Err('Must be even');
+ *
+ * const validate = validateAll([isPositive, isEven]);
+ * validate(4); // Ok(4)
+ * validate(3); // Err('Must be even')
+ * validate(-2); // Err('Must be positive')
+ */
+export const validateAll =
+  <T, E>(validators: Array<Validator<T, E>>) =>
+  (value: T): Result<T, E> => {
+    for (const validator of validators) {
+      const result = validator(value);
+      if (isErr(result)) {
+        return result;
+      }
+    }
+    return Ok(value);
+  };
+
+/**
+ * Combines multiple validators - at least one must pass
+ *
+ * @example
+ * const isZero: Validator<number> = (x) =>
+ *   x === 0 ? Ok(x) : Err('Not zero');
+ *
+ * const isPositive: Validator<number> = (x) =>
+ *   x > 0 ? Ok(x) : Err('Not positive');
+ *
+ * const validate = validateAny([isZero, isPositive]);
+ * validate(5); // Ok(5)
+ * validate(0); // Ok(0)
+ * validate(-1); // Err('Not positive')
+ */
+export const validateAny =
+  <T, E>(validators: Array<Validator<T, E>>) =>
+  (value: T): Result<T, E[]> => {
+    const errors: E[] = [];
+
+    for (const validator of validators) {
+      const result = validator(value);
+      if (isOk(result)) {
+        return Ok(value);
+      }
+      errors.push(result.error);
+    }
+
+    return Err(errors);
+  };
