@@ -29,4 +29,6 @@ export {
   equals,
   clone,
   freeze,
+  deepEquals,
+  deepClone,
 } from './_internal/object-access.js';

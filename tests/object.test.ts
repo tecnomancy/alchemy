@@ -5,6 +5,7 @@ import {
   keys, values, entries, fromEntries,
   hasKey, getPath, setPath, updatePath,
   isEmpty, isObject, equals, clone, freeze,
+  deepEquals, deepClone,
 } from '../src/object.js';
 
 describe('pick', () => {
@@ -252,5 +253,88 @@ describe('freeze', () => {
     expect(() => {
       (obj as { a: number }).a = 99;
     }).toThrow();
+  });
+});
+
+describe('deepEquals', () => {
+  it('equal primitives', () => expect(deepEquals(1)(1)).toBe(true));
+  it('unequal primitives', () => expect(deepEquals(1)(2)).toBe(false));
+  it('null equals null', () => expect(deepEquals(null)(null)).toBe(true));
+  it('undefined equals undefined', () => expect(deepEquals(undefined)(undefined)).toBe(true));
+  it('nested plain objects', () => expect(deepEquals({ x: { y: 1 } })({ x: { y: 1 } })).toBe(true));
+  it('nested objects — mismatch', () => expect(deepEquals({ x: { y: 1 } })({ x: { y: 2 } })).toBe(false));
+  it('arrays', () => expect(deepEquals([1, 2, 3])([1, 2, 3])).toBe(true));
+  it('nested arrays', () => expect(deepEquals([1, [2, 3]])([1, [2, 3]])).toBe(true));
+  it('array length mismatch', () => expect(deepEquals([1, 2])([1, 2, 3])).toBe(false));
+  it('Date equal', () => expect(deepEquals(new Date('2020-01-01'))(new Date('2020-01-01'))).toBe(true));
+  it('Date unequal', () => expect(deepEquals(new Date('2020-01-01'))(new Date('2021-01-01'))).toBe(false));
+  it('RegExp equal', () => expect(deepEquals(/foo/gi)(/foo/gi)).toBe(true));
+  it('RegExp unequal flags', () => expect(deepEquals(/foo/g)(/foo/i)).toBe(false));
+  it('Map equal', () => expect(deepEquals(new Map([['a', 1]]))(new Map([['a', 1]]))).toBe(true));
+  it('Map unequal', () => expect(deepEquals(new Map([['a', 1]]))(new Map([['a', 2]]))).toBe(false));
+  it('Set equal', () => expect(deepEquals(new Set([1, 2]))(new Set([1, 2]))).toBe(true));
+  it('Set unequal', () => expect(deepEquals(new Set([1, 2]))(new Set([1, 3]))).toBe(false));
+  it('circular reference — mirrored', () => {
+    const a: Record<string, unknown> = {};
+    a['self'] = a;
+    const b: Record<string, unknown> = {};
+    b['self'] = b;
+    expect(deepEquals(a)(b)).toBe(true);
+  });
+  it('circular reference — different', () => {
+    const a: Record<string, unknown> = { x: 1 };
+    a['self'] = a;
+    const b: Record<string, unknown> = { x: 2 };
+    b['self'] = b;
+    expect(deepEquals(a)(b)).toBe(false);
+  });
+});
+
+describe('deepClone', () => {
+  it('primitives pass through', () => expect(deepClone(42)).toBe(42));
+  it('null passes through', () => expect(deepClone(null)).toBe(null));
+  it('nested object is independent', () => {
+    const obj = { a: { b: 2 } };
+    const copy = deepClone(obj);
+    copy.a.b = 99;
+    expect(obj.a.b).toBe(2);
+  });
+  it('nested array is independent', () => {
+    const arr = [[1, 2], [3, 4]];
+    const copy = deepClone(arr);
+    copy[0][0] = 99;
+    expect(arr[0][0]).toBe(1);
+  });
+  it('Date is cloned by value', () => {
+    const d = new Date('2020-01-01');
+    const copy = deepClone(d);
+    expect(copy.getTime()).toBe(d.getTime());
+    expect(copy).not.toBe(d);
+  });
+  it('RegExp is cloned', () => {
+    const r = /foo/gi;
+    const copy = deepClone(r);
+    expect(copy.source).toBe(r.source);
+    expect(copy.flags).toBe(r.flags);
+    expect(copy).not.toBe(r);
+  });
+  it('Map is cloned deeply', () => {
+    const m = new Map([['a', { x: 1 }]]);
+    const copy = deepClone(m);
+    copy.get('a')!.x = 99;
+    expect(m.get('a')!.x).toBe(1);
+  });
+  it('Set is cloned', () => {
+    const s = new Set([1, 2, 3]);
+    const copy = deepClone(s);
+    expect(copy).not.toBe(s);
+    expect([...copy]).toEqual([1, 2, 3]);
+  });
+  it('circular reference is reproduced', () => {
+    const obj: Record<string, unknown> = { x: 1 };
+    obj['self'] = obj;
+    const copy = deepClone(obj) as Record<string, unknown>;
+    expect(copy['self']).toBe(copy);
+    expect(copy).not.toBe(obj);
   });
 });

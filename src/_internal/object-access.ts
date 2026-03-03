@@ -141,7 +141,11 @@ export const updatePath =
 export const isEmpty = <T extends object>(obj: T): boolean => Object.keys(obj).length === 0;
 
 /**
- * Deep-equality comparison for two objects (curried, data-last).
+ * Structural equality comparison for two plain objects (curried, data-last).
+ *
+ * Recursively compares own enumerable keys and their values. Does **not**
+ * handle `Date`, `RegExp`, `Map`, `Set`, top-level arrays, or circular
+ * references. For those cases use {@link deepEquals}.
  *
  * @example
  * equals({ a: 1, b: { c: 2 } })({ a: 1, b: { c: 2 } }); // true
@@ -183,6 +187,9 @@ export const equals =
 /**
  * Returns a deep clone of the value. Handles plain objects, arrays, and Dates.
  *
+ * Does **not** detect circular references or clone `Map`, `Set`, or `RegExp`.
+ * For those cases use {@link deepClone}.
+ *
  * @example
  * const original = { a: 1, b: { c: 2 } };
  * const copy = clone(original);
@@ -214,6 +221,159 @@ export const clone = <T>(obj: T): T => {
 
   return obj;
 };
+
+// ============================================================================
+// DEEP EQUALITY & DEEP CLONE
+// ============================================================================
+
+/** Internal recursive helper — carries a seen-map for cycle detection. */
+const deepEq = (a: unknown, b: unknown, seen: Map<unknown, unknown>): boolean => {
+  if (Object.is(a, b)) return true;
+  if (a === null || b === null) return false;
+  if (typeof a !== 'object' || typeof b !== 'object') return false;
+  if (Object.getPrototypeOf(a) !== Object.getPrototypeOf(b)) return false;
+
+  // Leaf types that don't recurse — check before registering in seen-map
+  if (a instanceof Date) return a.getTime() === (b as Date).getTime();
+  if (a instanceof RegExp) {
+    return a.source === (b as RegExp).source && a.flags === (b as RegExp).flags;
+  }
+
+  if (seen.has(a)) return seen.get(a) === b;
+  seen.set(a, b);
+
+  if (Array.isArray(a)) {
+    if (a.length !== (b as unknown[]).length) return false;
+    for (let i = 0; i < a.length; i++) {
+      if (!deepEq(a[i], (b as unknown[])[i], seen)) return false;
+    }
+    return true;
+  }
+
+  if (a instanceof Map) {
+    const bm = b as Map<unknown, unknown>;
+    if (a.size !== bm.size) return false;
+    for (const [k, v] of a) {
+      if (!bm.has(k) || !deepEq(v, bm.get(k), seen)) return false;
+    }
+    return true;
+  }
+
+  if (a instanceof Set) {
+    const bs = b as Set<unknown>;
+    if (a.size !== bs.size) return false;
+    for (const v of a) {
+      if (!bs.has(v)) return false;
+    }
+    return true;
+  }
+
+  const keysA = Object.keys(a as object);
+  if (keysA.length !== Object.keys(b as object).length) return false;
+  for (const key of keysA) {
+    if (!Object.prototype.hasOwnProperty.call(b, key)) return false;
+    if (!deepEq(
+      (a as Record<string, unknown>)[key],
+      (b as Record<string, unknown>)[key],
+      seen,
+    )) return false;
+  }
+  return true;
+}
+
+/**
+ * Deep equality comparison supporting any value type (curried, data-last).
+ *
+ * Handles primitives, plain objects, arrays, `Date`, `RegExp`, `Map`, `Set`,
+ * and circular references. Two circular structures are equal if they mirror
+ * each other structurally.
+ *
+ * @remarks
+ * `Set` membership is compared by reference for object values. Two sets
+ * containing structurally identical (but distinct) objects are **not** equal:
+ * `deepEquals(new Set([{a:1}]))(new Set([{a:1}]))` returns `false`.
+ * For primitive-only sets this is not a concern.
+ *
+ * @example
+ * deepEquals({ x: { y: 1 } })({ x: { y: 1 } }); // true
+ * deepEquals([1, [2, 3]])([1, [2, 3]]);           // true
+ * deepEquals(new Date('2020-01-01'))(new Date('2020-01-01')); // true
+ *
+ * const a: Record<string, unknown> = {};
+ * a['self'] = a;
+ * const b: Record<string, unknown> = {};
+ * b['self'] = b;
+ * deepEquals(a)(b); // true — mirrored cycle
+ */
+export const deepEquals =
+  <T>(a: T) =>
+  (b: T): boolean =>
+    deepEq(a, b, new Map());
+
+/** Internal recursive helper — carries a seen-map for cycle detection. */
+const deepCopy = (value: unknown, seen: Map<unknown, unknown>): unknown => {
+  if (value === null || typeof value !== 'object') return value;
+  if (seen.has(value)) return seen.get(value);
+
+  if (value instanceof Date) {
+    const copy = new Date(value.getTime());
+    seen.set(value, copy);
+    return copy;
+  }
+
+  if (value instanceof RegExp) {
+    const copy = new RegExp(value.source, value.flags);
+    seen.set(value, copy);
+    return copy;
+  }
+
+  if (Array.isArray(value)) {
+    const copy: unknown[] = [];
+    seen.set(value, copy);
+    for (const item of value) copy.push(deepCopy(item, seen));
+    return copy;
+  }
+
+  if (value instanceof Map) {
+    const copy = new Map<unknown, unknown>();
+    seen.set(value, copy);
+    for (const [k, v] of value) copy.set(deepCopy(k, seen), deepCopy(v, seen));
+    return copy;
+  }
+
+  if (value instanceof Set) {
+    const copy = new Set<unknown>();
+    seen.set(value, copy);
+    for (const v of value) copy.add(deepCopy(v, seen));
+    return copy;
+  }
+
+  const copy = Object.create(Object.getPrototypeOf(value) as object) as Record<string, unknown>;
+  seen.set(value, copy);
+  for (const key of Object.keys(value as object)) {
+    copy[key] = deepCopy((value as Record<string, unknown>)[key], seen);
+  }
+  return copy;
+}
+
+/**
+ * Returns a deep clone of any value with full cycle detection.
+ *
+ * Handles primitives, plain objects, arrays, `Date`, `RegExp`, `Map`, `Set`,
+ * and circular references. Circular references are reproduced in the clone.
+ *
+ * @example
+ * const obj = { a: { b: 2 } };
+ * const copy = deepClone(obj);
+ * copy.a.b = 99;
+ * obj.a.b; // 2 — untouched
+ *
+ * const arr = [[1, 2], [3, 4]];
+ * const copy2 = deepClone(arr);
+ * copy2[0][0] = 99;
+ * arr[0][0]; // 1 — untouched
+ */
+export const deepClone = <T>(value: T): T => deepCopy(value, new Map()) as T;
 
 /**
  * Recursively freezes an object, making it and all nested objects immutable.
