@@ -119,6 +119,9 @@ describe('slice / substring / pad / repeat / reverse', () => {
   it('padEnd', () => expect(padEnd(5, '0')('42')).toBe('42000'));
   it('repeat', () => expect(repeat(3)('ha')).toBe('hahaha'));
   it('reverse', () => expect(reverse('hello')).toBe('olleh'));
+  it('reverse preserves multi-codepoint characters (emoji)', () => {
+    expect(reverse('😀ab')).toBe('ba😀');
+  });
 });
 
 describe('truncate', () => {
@@ -170,7 +173,15 @@ describe('template', () => {
 });
 
 describe('format', () => {
-  it('replaces %s and %d tokens', () => {
+  it('replaces %s tokens', () => {
+    expect(format('Hello %s')('Alice')).toBe('Hello Alice');
+  });
+
+  it('replaces %d tokens', () => {
+    expect(format('Score: %d')(42)).toBe('Score: 42');
+  });
+
+  it('replaces %s and %d tokens in sequence', () => {
     expect(format('Hello %s, you are %d')('Alice', 30)).toBe('Hello Alice, you are 30');
   });
 });

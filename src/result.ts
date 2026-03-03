@@ -164,6 +164,69 @@ export const match =
   (result: Result<T, E>): R =>
     isOk(result) ? onOk(result.value) : onErr(result.error);
 
+/**
+ * Executes a side-effect on the value if Ok, then passes the Result through unchanged.
+ * Useful for logging inside a pipe without breaking the chain.
+ *
+ * @example
+ * pipe(
+ *   Ok(42),
+ *   tapResult(value => console.log('got:', value)), // logs 'got: 42'
+ *   mapResult(n => n * 2),
+ * ); // Ok(84)
+ */
+export const tapResult =
+  <T, E>(fn: (value: T) => void) =>
+  (result: Result<T, E>): Result<T, E> => {
+    if (isOk(result)) fn(result.value);
+    return result;
+  };
+
+/**
+ * Executes a side-effect on the error if Err, then passes the Result through unchanged.
+ *
+ * @example
+ * pipe(
+ *   Err('oops'),
+ *   tapError(e => console.error('error:', e)), // logs 'error: oops'
+ *   mapResult(n => n * 2),
+ * ); // Err('oops')
+ */
+export const tapError =
+  <T, E>(fn: (error: E) => void) =>
+  (result: Result<T, E>): Result<T, E> => {
+    if (isErr(result)) fn(result.error);
+    return result;
+  };
+
+/**
+ * Recovers from an Err by applying `fn` to produce an alternative Result.
+ * If Ok, passes through unchanged.
+ *
+ * @example
+ * const fallback = orElse((e: string) => Ok(0));
+ * fallback(Ok(42));    // Ok(42)
+ * fallback(Err('x'));  // Ok(0)
+ */
+export const orElse =
+  <T, E, F>(fn: (error: E) => Result<T, F>) =>
+  (result: Result<T, E>): Result<T, F> =>
+    isErr(result) ? fn(result.error) : result;
+
+/**
+ * Lifts a nullable value into a Result, using `onNone` to produce the error.
+ *
+ * @example
+ * const fromId = fromNullableResult(() => 'not found');
+ * fromId(42);        // Ok(42)
+ * fromId(null);      // Err('not found')
+ * fromId(undefined); // Err('not found')
+ */
+export const fromNullableResult =
+  <E>(onNone: () => E) =>
+  <T>(value: T | null | undefined): Result<T, E> =>
+    value == null ? Err(onNone()) : Ok(value);
+
 // ============================================================================
 // COMBINATORS
 // ============================================================================

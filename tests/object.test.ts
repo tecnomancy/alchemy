@@ -201,9 +201,18 @@ describe('equals', () => {
     expect(equals({ a: 1 } as object)({ a: 1, b: 2 } as object)).toBe(false);
   });
 
-  it('handles nested arrays', () => {
+  it('handles nested arrays of primitives', () => {
     expect(equals({ list: [1, 2, 3] })({ list: [1, 2, 3] })).toBe(true);
     expect(equals({ list: [1, 2] })({ list: [1, 3] })).toBe(false);
+  });
+
+  it('handles nested arrays of objects', () => {
+    expect(equals({ list: [{ a: 1 }] })({ list: [{ a: 1 }] })).toBe(true);
+    expect(equals({ list: [{ a: 1 }] })({ list: [{ a: 2 }] })).toBe(false);
+  });
+
+  it('returns false for arrays of different length', () => {
+    expect(equals({ list: [1, 2, 3] })({ list: [1, 2] })).toBe(false);
   });
 });
 
@@ -215,11 +224,18 @@ describe('clone', () => {
     expect(original.b.c).toBe(2);
   });
 
-  it('clones arrays', () => {
+  it('clones arrays of primitives', () => {
     const arr = [1, [2, 3]];
     const copy = clone(arr);
     (copy[1] as number[])[0] = 99;
     expect((arr[1] as number[])[0]).toBe(2);
+  });
+
+  it('clones arrays of objects (recursive)', () => {
+    const arr = [{ x: 1 }, { x: 2 }];
+    const copy = clone(arr);
+    copy[0].x = 99;
+    expect(arr[0].x).toBe(1);
   });
 
   it('clones Date objects', () => {

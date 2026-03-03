@@ -299,7 +299,7 @@ export const repeat =
  * @example
  * reverse('hello'); // 'olleh'
  */
-export const reverse = (str: string): string => str.split('').reverse().join('');
+export const reverse = (str: string): string => Array.from(str).reverse().join('');
 
 /**
  * Truncates a string to the given length, appending a suffix if cut.
