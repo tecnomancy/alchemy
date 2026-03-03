@@ -11,6 +11,7 @@ import {
   fromPromise,
   validateAll, validateAny,
   mapResultAsync, flatMapAsync,
+  tapResult, tapError, orElse, fromNullableResult,
   type Result,
 } from '../src/result.js';
 
@@ -50,6 +51,13 @@ describe('Result — transformations', () => {
   it('mapErr transforms Err value', () => {
     const r = mapErr((e: string) => e.toUpperCase())(Err<number, string>('oops'));
     if (!r.ok) expect(r.error).toBe('OOPS');
+  });
+
+  it('mapErr passes Ok through unchanged', () => {
+    const fn = vi.fn((e: string) => e.toUpperCase());
+    const r = mapErr(fn)(Ok<number, string>(42));
+    expect(isOk(r)).toBe(true);
+    expect(fn).not.toHaveBeenCalled();
   });
 
   it('flatMap chains Ok results', () => {
@@ -99,6 +107,10 @@ describe('Result — unwrap variants', () => {
   it('unwrapOrElse computes fallback', () => {
     expect(unwrapOrElse((e: string) => e.length)(Err<number, string>('abc'))).toBe(3);
   });
+
+  it('unwrapOrElse extracts Ok value directly', () => {
+    expect(unwrapOrElse((_e: string) => 0)(Ok<number, string>(99))).toBe(99);
+  });
 });
 
 describe('Result — combinators', () => {
@@ -115,6 +127,18 @@ describe('Result — combinators', () => {
   it('combineTwo merges two Ok values', () => {
     const r = combineTwo((a: number, b: number) => a + b)(Ok<number, string>(3), Ok<number, string>(4));
     expect(unwrap(r)).toBe(7);
+  });
+
+  it('combineTwo short-circuits on first Err', () => {
+    const r = combineTwo((a: number, b: number) => a + b)(Err<number, string>('e1'), Ok<number, string>(4));
+    expect(isErr(r)).toBe(true);
+    if (!r.ok) expect(r.error).toBe('e1');
+  });
+
+  it('combineTwo short-circuits on second Err', () => {
+    const r = combineTwo((a: number, b: number) => a + b)(Ok<number, string>(3), Err<number, string>('e2'));
+    expect(isErr(r)).toBe(true);
+    if (!r.ok) expect(r.error).toBe('e2');
   });
 
   it('collectErrors collects all errors', () => {
@@ -213,5 +237,79 @@ describe('flatMapAsync', () => {
   it('propagates Err returned by the chained function', async () => {
     const result = await flatMapAsync(safeSqrt)(Ok<number, string>(-1));
     expect(isErr(result)).toBe(true);
+  });
+});
+
+describe('tapResult', () => {
+  it('calls side-effect on Ok and passes value through', () => {
+    const log = vi.fn();
+    const r = tapResult<number, string>(log)(Ok(42));
+    expect(log).toHaveBeenCalledWith(42);
+    expect(isOk(r)).toBe(true);
+    if (r.ok) expect(r.value).toBe(42);
+  });
+
+  it('does not call side-effect on Err', () => {
+    const log = vi.fn();
+    const r = tapResult<number, string>(log)(Err('oops'));
+    expect(log).not.toHaveBeenCalled();
+    expect(isErr(r)).toBe(true);
+  });
+});
+
+describe('tapError', () => {
+  it('calls side-effect on Err and passes error through', () => {
+    const log = vi.fn();
+    const r = tapError<number, string>(log)(Err('oops'));
+    expect(log).toHaveBeenCalledWith('oops');
+    expect(isErr(r)).toBe(true);
+  });
+
+  it('does not call side-effect on Ok', () => {
+    const log = vi.fn();
+    const r = tapError<number, string>(log)(Ok(42));
+    expect(log).not.toHaveBeenCalled();
+    expect(isOk(r)).toBe(true);
+  });
+});
+
+describe('orElse', () => {
+  it('passes Ok through unchanged', () => {
+    const r = orElse((_e: string) => Ok(0))(Ok<number, string>(42));
+    expect(isOk(r)).toBe(true);
+    if (r.ok) expect(r.value).toBe(42);
+  });
+
+  it('recovers from Err by producing a new Result', () => {
+    const r = orElse((e: string) => Ok(e.length))(Err<number, string>('oops'));
+    expect(isOk(r)).toBe(true);
+    if (r.ok) expect(r.value).toBe(4);
+  });
+
+  it('can recover to another Err', () => {
+    const r = orElse((_e: string) => Err(404))(Err<number, string>('not found'));
+    expect(isErr(r)).toBe(true);
+    if (!r.ok) expect(r.error).toBe(404);
+  });
+});
+
+describe('fromNullableResult', () => {
+  const lift = fromNullableResult<string>(() => 'missing');
+
+  it('wraps a non-null value in Ok', () => {
+    const r = lift(42);
+    expect(isOk(r)).toBe(true);
+    if (r.ok) expect(r.value).toBe(42);
+  });
+
+  it('returns Err for null', () => {
+    const r = lift(null);
+    expect(isErr(r)).toBe(true);
+    if (!r.ok) expect(r.error).toBe('missing');
+  });
+
+  it('returns Err for undefined', () => {
+    const r = lift(undefined);
+    expect(isErr(r)).toBe(true);
   });
 });

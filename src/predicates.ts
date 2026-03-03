@@ -400,20 +400,24 @@ export const isInteger = (n: number): boolean => Number.isInteger(n);
 /**
  * Returns true if the value is NaN.
  *
+ * Named `isNotANumber` to avoid shadowing the global `isNaN` built-in.
+ *
  * @example
- * isNaN(NaN); // true
- * isNaN(0);   // false
+ * isNotANumber(NaN); // true
+ * isNotANumber(0);   // false
  */
-export const isNaN = (n: number): boolean => Number.isNaN(n);
+export const isNotANumber = (n: number): boolean => Number.isNaN(n);
 
 /**
  * Returns true if the number is finite.
  *
+ * Named `isFiniteNumber` to avoid shadowing the global `isFinite` built-in.
+ *
  * @example
- * isFinite(42);       // true
- * isFinite(Infinity); // false
+ * isFiniteNumber(42);       // true
+ * isFiniteNumber(Infinity); // false
  */
-export const isFinite = (n: number): boolean => Number.isFinite(n);
+export const isFiniteNumber = (n: number): boolean => Number.isFinite(n);
 
 /**
  * Returns true if the number is positive or negative infinity.

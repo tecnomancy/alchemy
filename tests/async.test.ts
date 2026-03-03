@@ -183,6 +183,15 @@ describe('debounceAsync', () => {
     expect(inner).toHaveBeenNthCalledWith(1, 1);
     expect(inner).toHaveBeenNthCalledWith(2, 2);
   });
+
+  it('rejects when the underlying function throws', async () => {
+    const inner = vi.fn(async (_n: number): Promise<number> => {
+      throw new Error('debounce error');
+    });
+    const debounced = debounceAsync<[number], number>(10)(inner as NumFn);
+
+    await expect(debounced(1)).rejects.toThrow('debounce error');
+  });
 });
 
 describe('throttleAsync', () => {

@@ -6,7 +6,7 @@ import {
   isString, isNumber, isBoolean, isFunction, isArray,
   isNull, isUndefined, isNil, isDate, isRegExp, isPromise,
   isEven, isOdd, isPositive, isNegative, isZero,
-  isInteger, isNaN, isFinite, isInfinite,
+  isInteger, isNotANumber, isFiniteNumber, isInfinite,
 } from '../src/predicates.js';
 
 describe('isNotEmpty', () => {
@@ -216,14 +216,14 @@ describe('numeric predicates', () => {
     expect(isInteger(42.5)).toBe(false);
   });
 
-  it('isNaN', () => {
-    expect(isNaN(NaN)).toBe(true);
-    expect(isNaN(0)).toBe(false);
+  it('isNotANumber', () => {
+    expect(isNotANumber(NaN)).toBe(true);
+    expect(isNotANumber(0)).toBe(false);
   });
 
-  it('isFinite', () => {
-    expect(isFinite(42)).toBe(true);
-    expect(isFinite(Infinity)).toBe(false);
+  it('isFiniteNumber', () => {
+    expect(isFiniteNumber(42)).toBe(true);
+    expect(isFiniteNumber(Infinity)).toBe(false);
   });
 
   it('isInfinite', () => {
