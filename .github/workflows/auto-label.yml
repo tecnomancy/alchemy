@@ -1,0 +1,20 @@
+name: Auto Label
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  label:
+    name: Label PR by changed files
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/labeler@v5
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          configuration-path: .github/labeler.yml
+          sync-labels: false

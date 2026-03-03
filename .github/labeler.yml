@@ -1,0 +1,51 @@
+# Used by actions/labeler to auto-label PRs by changed files
+
+result:
+  - src/result.ts
+  - src/_internal/result*.ts
+  - tests/result.test.ts
+
+option:
+  - src/option.ts
+  - tests/option.test.ts
+
+array:
+  - src/array.ts
+  - src/_internal/array*.ts
+  - tests/array.test.ts
+
+object:
+  - src/object.ts
+  - src/_internal/object*.ts
+  - tests/object.test.ts
+
+string:
+  - src/string.ts
+  - src/_internal/string*.ts
+  - tests/string.test.ts
+
+async:
+  - src/async.ts
+  - src/_internal/async*.ts
+  - tests/async.test.ts
+
+composition:
+  - src/composition.ts
+  - src/_internal/pipe.ts
+  - src/_internal/compose.ts
+  - src/_internal/fn-utils.ts
+  - tests/composition.test.ts
+
+predicates:
+  - src/predicates.ts
+  - tests/predicates.test.ts
+
+documentation:
+  - "**/*.md"
+  - docs/**
+
+ci:
+  - .github/**
+  - tsconfig*.json
+  - package*.json
+  - vitest.config*
