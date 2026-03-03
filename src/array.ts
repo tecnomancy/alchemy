@@ -3,6 +3,9 @@
  * @module array
  */
 
+import type { Option } from './option.js';
+import { Some, None } from './option.js';
+
 // ============================================================================
 // ARRAY TRANSFORMATIONS
 // ============================================================================
@@ -296,3 +299,60 @@ export const compact = <T>(arr: Array<T | null | undefined | false | 0 | ''>): T
  * hasItems([]);     // false
  */
 export const hasItems = <T>(arr: T[]): boolean => Array.isArray(arr) && arr.length > 0;
+
+// ============================================================================
+// SAFE ARRAY NAVIGATION (Option-returning)
+// ============================================================================
+
+/**
+ * Returns the first element of an array, or None if empty.
+ * @example
+ * head([1, 2, 3]); // Some(1)
+ * head([]);        // None
+ */
+export const head = <T>(arr: T[]): Option<T> =>
+  arr.length > 0 ? Some(arr[0]) : None;
+
+/**
+ * Returns all elements except the first, or None if array is empty.
+ * @example
+ * tail([1, 2, 3]); // Some([2, 3])
+ * tail([1]);       // Some([])
+ * tail([]);        // None
+ */
+export const tail = <T>(arr: T[]): Option<T[]> =>
+  arr.length > 0 ? Some(arr.slice(1)) : None;
+
+/**
+ * Returns the last element of an array, or None if empty.
+ * @example
+ * last([1, 2, 3]); // Some(3)
+ * last([]);        // None
+ */
+export const last = <T>(arr: T[]): Option<T> =>
+  arr.length > 0 ? Some(arr[arr.length - 1]) : None;
+
+/**
+ * Returns all elements except the last, or None if array is empty.
+ * @example
+ * init([1, 2, 3]); // Some([1, 2])
+ * init([1]);       // Some([])
+ * init([]);        // None
+ */
+export const init = <T>(arr: T[]): Option<T[]> =>
+  arr.length > 0 ? Some(arr.slice(0, -1)) : None;
+
+/**
+ * Returns the element at index n (supports negative indices from end), or None if out of bounds.
+ * Curried, data-last.
+ * @example
+ * nth(0)([10, 20, 30]);  // Some(10)
+ * nth(-1)([10, 20, 30]); // Some(30)
+ * nth(5)([10, 20]);      // None
+ */
+export const nth =
+  (n: number) =>
+  <T>(arr: T[]): Option<T> => {
+    const idx = n < 0 ? arr.length + n : n;
+    return idx >= 0 && idx < arr.length ? Some(arr[idx]) : None;
+  };

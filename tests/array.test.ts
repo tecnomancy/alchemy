@@ -6,7 +6,9 @@ import {
   flatten, flattenDeep,
   zip, unzip, chunk,
   compact, hasItems,
+  head, tail, last, init, nth,
 } from '../src/array.js';
+import { Some, None } from '../src/option.js';
 
 describe('map', () => {
   it('transforms every element', () => {
@@ -229,4 +231,23 @@ describe('hasItems', () => {
   it('returns false for an empty array', () => {
     expect(hasItems([])).toBe(false);
   });
+});
+
+describe('head / tail / last / init / nth', () => {
+  it('head returns Some for non-empty array', () => expect(head([1, 2, 3])).toEqual(Some(1)));
+  it('head returns None for empty array', () => expect(head([])).toEqual(None));
+  it('tail returns Some([2,3]) for [1,2,3]', () => expect(tail([1, 2, 3])).toEqual(Some([2, 3])));
+  it('tail returns Some([]) for single-element array', () => expect(tail([1])).toEqual(Some([])));
+  it('tail returns None for empty array', () => expect(tail([])).toEqual(None));
+  it('last returns Some for non-empty array', () => expect(last([1, 2, 3])).toEqual(Some(3)));
+  it('last returns None for empty array', () => expect(last([])).toEqual(None));
+  it('init returns Some([1,2]) for [1,2,3]', () => expect(init([1, 2, 3])).toEqual(Some([1, 2])));
+  it('init returns Some([]) for single-element array', () => expect(init([1])).toEqual(Some([])));
+  it('init returns None for empty array', () => expect(init([])).toEqual(None));
+  it('nth(0) returns first element', () => expect(nth(0)([10, 20, 30])).toEqual(Some(10)));
+  it('nth(2) returns third element', () => expect(nth(2)([10, 20, 30])).toEqual(Some(30)));
+  it('nth(-1) returns last element', () => expect(nth(-1)([10, 20, 30])).toEqual(Some(30)));
+  it('nth(-2) returns second to last', () => expect(nth(-2)([10, 20, 30])).toEqual(Some(20)));
+  it('nth out of bounds returns None', () => expect(nth(5)([10, 20])).toEqual(None));
+  it('nth negative out of bounds returns None', () => expect(nth(-5)([10, 20])).toEqual(None));
 });
