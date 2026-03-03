@@ -14,17 +14,15 @@
 
 | | fp-core | Ramda | fp-ts |
 |---|---|---|---|
-| TypeScript-native | ✅ | ⚠️ (bolted-on types) | ✅ |
-| `pipe()` with per-step inference | ✅ | ❌ (loses types past ~5 steps) | ✅ |
-| `Result<T, E>` built-in | ✅ | ❌ | ✅ (Either) |
-| `Option<T>` built-in | ✅ | ❌ | ✅ (Option) |
-| Async-aware (`pipeAsync`, `retry`) | ✅ | ❌ | ⚠️ (TaskEither) |
-| Zero dependencies | ✅ | ✅ | ✅ |
+| TypeScript-native | yes | partial (bolted-on types) | yes |
+| `pipe()` with per-step inference | yes | no (loses types past ~5 steps) | yes |
+| `Result<T, E>` built-in | yes | no | yes (Either) |
+| `Option<T>` built-in | yes | no | yes (Option) |
+| Async-aware (`pipeAsync`, `retry`) | yes | no | partial (TaskEither) |
+| Zero dependencies | yes | yes | yes |
 | Learning curve | Low | Medium | High |
 | Bundle (minzipped) | ~3 kb | ~14 kb | ~25 kb |
-| Category Theory jargon | ❌ | ⚠️ | ✅ (unavoidable) |
-
-**fp-core is not a Haskell port. It's TypeScript-native FP for engineers who want to ship.**
+| Category Theory naming | no | partial | yes (unavoidable) |
 
 ---
 
@@ -51,7 +49,7 @@ const result = pipe(
   s => s.split(' '),       // string → string[]
   arr => arr.length,       // string[] → number
 );
-// result: 2  ✓ TypeScript knows it's a number
+// result: 2 (TypeScript infers number)
 
 // Result — errors as values, no try/catch
 const divide = (a: number, b: number) =>
@@ -99,8 +97,7 @@ const result = pipe(
 // result: 'Total: 60'
 ```
 
-> Ramda's `pipe` works point-free but loses TypeScript inference past ~5 steps.
-> `fp-core/pipe` is value-first and infers up to 10 steps with full precision.
+> Ramda's `pipe` works point-free but loses TypeScript inference past ~5 steps. fp-core's `pipe` is value-first and infers up to 10 steps.
 
 ---
 
@@ -303,12 +300,12 @@ template({ name: 'Alice', role: 'admin' })('{{name}} is {{role}}')
 
 ## Design Principles
 
-1. **Value-first, not point-free.** `pipe(value, fn1, fn2)` instead of `pipe(fn1, fn2)(value)`. TypeScript loves this.
-2. **Data-last currying.** All array/object utilities take data as the last argument so they compose naturally.
+1. **Value-first, not point-free.** `pipe(value, fn1, fn2)` instead of `pipe(fn1, fn2)(value)`. TypeScript infers every intermediate type without annotation.
+2. **Data-last currying.** All array/object utilities take data as the last argument so they compose naturally in `pipe`.
 3. **Result over exceptions.** Functions that can fail return `Result<T, E>`. No hidden control flow.
-4. **Option over null.** Functions that can return nothing return `Option<T>`. No accidental `undefined`.
+4. **Option over null.** Functions that can return nothing return `Option<T>`. No implicit `undefined`.
 5. **Zero magic.** No runtime reflection, no proxy traps, no hidden global state.
-6. **Tree-shakeable.** Import only what you use — bundlers will shake the rest.
+6. **Tree-shakeable.** Named exports, no side effects — bundlers eliminate what you do not import.
 
 ---
 

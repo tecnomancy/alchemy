@@ -1,13 +1,16 @@
-name: CI
+name: Publish to npm
 
 on:
-  pull_request:
-    branches: [main]
+  release:
+    types: [created]
 
 jobs:
-  ci:
-    name: Type-check, Test & Build
+  publish:
+    name: Publish
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
@@ -15,6 +18,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          registry-url: https://registry.npmjs.org
           cache: npm
 
       - name: Install dependencies
@@ -28,3 +32,8 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Publish
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

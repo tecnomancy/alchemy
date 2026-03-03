@@ -1,0 +1,57 @@
+name: PR Sync with Issue
+
+on:
+  pull_request:
+    types: [opened, edited]
+
+jobs:
+  sync:
+    name: Sync labels and milestone from linked issue
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: read
+
+    steps:
+      - name: Sync PR with linked issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const body = pr.body || '';
+
+            const match = body.match(/(?:closes|fixes|resolves)\s+#(\d+)/i);
+            if (!match) {
+              console.log('No linked issue found in PR body');
+              return;
+            }
+
+            const issueNumber = parseInt(match[1]);
+            console.log(`Linked issue: #${issueNumber}`);
+
+            const { data: issue } = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+            });
+
+            if (issue.labels.length > 0) {
+              const labelNames = issue.labels.map(l => l.name);
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                labels: labelNames,
+              });
+              console.log(`Labels synced: ${labelNames.join(', ')}`);
+            }
+
+            if (issue.milestone) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                milestone: issue.milestone.number,
+              });
+              console.log(`Milestone synced: ${issue.milestone.title}`);
+            }

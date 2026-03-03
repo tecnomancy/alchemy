@@ -1,0 +1,59 @@
+name: Feature Request
+description: Propose a new function or enhancement
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What problem does this solve? What is missing?
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed API
+      description: Show the function signature and usage example
+      placeholder: |
+        ```typescript
+        // signature
+        export const myFn = <T>(arg: T): Result<T, Error> => ...
+
+        // usage
+        pipe(value, myFn, ...)
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: Target Module
+      options:
+        - result
+        - option
+        - composition (pipe/compose)
+        - async
+        - array
+        - object
+        - string
+        - predicates
+        - new module
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: Follows curried data-last style
+        - label: Works in a pipe
+        - label: Has a clear TypeScript signature
+        - label: Does not require a dependency

@@ -1,0 +1,70 @@
+name: Bug Report
+description: Report a bug or unexpected behavior
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Clear description of the bug
+      placeholder: What happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Minimal reproduction
+      placeholder: |
+        ```typescript
+        import { ... } from 'fp-core';
+        // ...
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+    validations:
+      required: true
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: Module
+      options:
+        - result
+        - option
+        - composition (pipe/compose)
+        - async
+        - array
+        - object
+        - string
+        - predicates
+        - other
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: fp-core version
+      placeholder: "e.g. 0.1.0"
+    validations:
+      required: true
+
+  - type: input
+    id: ts_version
+    attributes:
+      label: TypeScript version
+      placeholder: "e.g. 5.4.0"
