@@ -14,15 +14,15 @@
 
 | | fp-core | Ramda | fp-ts |
 |---|---|---|---|
-| TypeScript-native | ✅ | ⚠️ (bolted-on types) | ✅ |
-| `pipe()` with per-step inference | ✅ | ❌ (loses types past ~5 steps) | ✅ |
-| `Result<T, E>` built-in | ✅ | ❌ | ✅ (Either) |
-| `Option<T>` built-in | ✅ | ❌ | ✅ (Option) |
-| Async-aware (`pipeAsync`, `retry`) | ✅ | ❌ | ⚠️ (TaskEither) |
-| Zero dependencies | ✅ | ✅ | ✅ |
+| TypeScript-native | yes | partial (bolted-on types) | yes |
+| `pipe()` with per-step inference | yes | no (loses types past ~5 steps) | yes |
+| `Result<T, E>` built-in | yes | no | yes (Either) |
+| `Option<T>` built-in | yes | no | yes (Option) |
+| Async-aware (`pipeAsync`, `retry`) | yes | no | partial (TaskEither) |
+| Zero dependencies | yes | yes | yes |
 | Learning curve | Low | Medium | High |
 | Bundle (minzipped) | ~3 kb | ~14 kb | ~25 kb |
-| Category Theory jargon | ❌ | ⚠️ | ✅ (unavoidable) |
+| Category Theory jargon | no | partial | yes (unavoidable) |
 
 **fp-core is not a Haskell port. It's TypeScript-native FP for engineers who want to ship.**
 
@@ -51,7 +51,7 @@ const result = pipe(
   s => s.split(' '),       // string → string[]
   arr => arr.length,       // string[] → number
 );
-// result: 2  ✓ TypeScript knows it's a number
+// result: 2  (TypeScript knows it's a number)
 
 // Result — errors as values, no try/catch
 const divide = (a: number, b: number) =>
