@@ -1,18 +1,17 @@
 /**
- * Funções utilitárias para transformação funcional de arrays
+ * Functional array utilities — curried, data-last, pipe-friendly.
  * @module array
  */
 
 // ============================================================================
-// ARRAY TRANSFORMATIONS
+// TRANSFORMATIONS
 // ============================================================================
 
 /**
- * Aplica função a cada elemento do array (curried)
+ * Maps a function over every element of an array (curried).
  *
  * @example
- * const double = (x) => x * 2;
- * map(double)([1, 2, 3]); // [2, 4, 6]
+ * map((x: number) => x * 2)([1, 2, 3]); // [2, 4, 6]
  */
 export const map =
   <T, R>(fn: (item: T) => R) =>
@@ -20,11 +19,10 @@ export const map =
     arr.map(fn);
 
 /**
- * Filtra array baseado em predicado (curried)
+ * Filters an array by a predicate (curried).
  *
  * @example
- * const isEven = (x) => x % 2 === 0;
- * filter(isEven)([1, 2, 3, 4]); // [2, 4]
+ * filter((x: number) => x % 2 === 0)([1, 2, 3, 4]); // [2, 4]
  */
 export const filter =
   <T>(predicate: (item: T) => boolean) =>
@@ -32,11 +30,10 @@ export const filter =
     arr.filter(predicate);
 
 /**
- * Reduz array a um único valor (curried)
+ * Reduces an array to a single value (curried).
  *
  * @example
- * const sum = (acc, x) => acc + x;
- * reduce(sum, 0)([1, 2, 3, 4]); // 10
+ * reduce((acc: number, x: number) => acc + x, 0)([1, 2, 3, 4]); // 10
  */
 export const reduce =
   <T, R>(fn: (acc: R, item: T) => R, initial: R) =>
@@ -44,11 +41,10 @@ export const reduce =
     arr.reduce(fn, initial);
 
 /**
- * Mapeia e achata array (flatMap curried)
+ * Maps and flattens one level (curried).
  *
  * @example
- * const duplicate = (x) => [x, x];
- * flatMapArray(duplicate)([1, 2]); // [1, 1, 2, 2]
+ * flatMapArray((x: number) => [x, x])([1, 2]); // [1, 1, 2, 2]
  */
 export const flatMapArray =
   <T, R>(fn: (item: T) => R[]) =>
@@ -56,11 +52,11 @@ export const flatMapArray =
     arr.flatMap(fn);
 
 /**
- * Ordena array baseado em função de extração (curried)
+ * Sorts an array by a key extractor, ascending (curried). Does not mutate.
  *
  * @example
- * const users = [{ name: 'Bob' }, { name: 'Alice' }];
- * sortBy(u => u.name)(users); // [{ name: 'Alice' }, { name: 'Bob' }]
+ * sortBy((u: { name: string }) => u.name)([{ name: 'Bob' }, { name: 'Alice' }]);
+ * // [{ name: 'Alice' }, { name: 'Bob' }]
  */
 export const sortBy =
   <T>(fn: (item: T) => string | number) =>
@@ -74,17 +70,15 @@ export const sortBy =
     });
 
 /**
- * Remove duplicados de array
+ * Removes duplicate values from an array.
  *
  * @example
- * unique()([1, 2, 2, 3, 1]); // [1, 2, 3]
+ * unique([1, 2, 2, 3, 1]); // [1, 2, 3]
  */
-export const unique =
-  <T>() =>
-  (arr: T[]): T[] => [...new Set(arr)];
+export const unique = <T>(arr: T[]): T[] => [...new Set(arr)];
 
 /**
- * Pega os primeiros N elementos de um array
+ * Returns the first N elements of an array (curried).
  *
  * @example
  * take(2)([1, 2, 3, 4]); // [1, 2]
@@ -95,7 +89,7 @@ export const take =
     arr.slice(0, n);
 
 /**
- * Pula os primeiros N elementos de um array
+ * Skips the first N elements of an array (curried).
  *
  * @example
  * skip(2)([1, 2, 3, 4]); // [3, 4]
@@ -106,11 +100,10 @@ export const skip =
     arr.slice(n);
 
 /**
- * Encontra primeiro elemento que satisfaz predicado
+ * Returns the first element that satisfies the predicate (curried).
  *
  * @example
- * const isEven = (x) => x % 2 === 0;
- * find(isEven)([1, 3, 4, 5]); // 4
+ * find((x: number) => x % 2 === 0)([1, 3, 4, 5]); // 4
  */
 export const find =
   <T>(predicate: (item: T) => boolean) =>
@@ -118,12 +111,11 @@ export const find =
     arr.find(predicate);
 
 /**
- * Verifica se algum elemento satisfaz predicado
+ * Returns true if at least one element satisfies the predicate (curried).
  *
  * @example
- * const isEven = (x) => x % 2 === 0;
- * some(isEven)([1, 3, 5]); // false
- * some(isEven)([1, 2, 3]); // true
+ * some((x: number) => x % 2 === 0)([1, 3, 5]); // false
+ * some((x: number) => x % 2 === 0)([1, 2, 3]); // true
  */
 export const some =
   <T>(predicate: (item: T) => boolean) =>
@@ -131,32 +123,31 @@ export const some =
     arr.some(predicate);
 
 /**
- * Verifica se todos elementos satisfazem predicado
+ * Returns true if every element satisfies the predicate (curried).
  *
  * @example
- * const isEven = (x) => x % 2 === 0;
- * every(isEven)([2, 4, 6]); // true
- * every(isEven)([2, 3, 4]); // false
+ * every((x: number) => x % 2 === 0)([2, 4, 6]); // true
+ * every((x: number) => x % 2 === 0)([2, 3, 4]); // false
  */
 export const every =
   <T>(predicate: (item: T) => boolean) =>
   (arr: T[]): boolean =>
     arr.every(predicate);
 
+// ============================================================================
+// GROUPING
+// ============================================================================
+
 /**
- * Agrupa elementos do array por chave
+ * Groups elements by a key extractor (curried).
  *
  * @example
- * const users = [
+ * groupBy((u: { role: string }) => u.role)([
  *   { name: 'Alice', role: 'admin' },
- *   { name: 'Bob', role: 'user' },
- *   { name: 'Charlie', role: 'admin' }
- * ];
- * groupBy((u) => u.role)(users);
- * // {
- * //   admin: [{ name: 'Alice', role: 'admin' }, { name: 'Charlie', role: 'admin' }],
- * //   user: [{ name: 'Bob', role: 'user' }]
- * // }
+ *   { name: 'Bob',   role: 'user'  },
+ *   { name: 'Carol', role: 'admin' },
+ * ]);
+ * // { admin: [...], user: [...] }
  */
 export const groupBy =
   <T, K extends string | number>(fn: (item: T) => K) =>
@@ -164,16 +155,14 @@ export const groupBy =
     const result = {} as Record<K, T[]>;
     for (const item of arr) {
       const key = fn(item);
-      if (!result[key]) {
-        result[key] = [];
-      }
+      if (!result[key]) result[key] = [];
       result[key].push(item);
     }
     return result;
   };
 
 /**
- * Conta ocorrências de cada elemento
+ * Counts occurrences by a key extractor (curried).
  *
  * @example
  * countBy((x: number) => x % 2 === 0 ? 'even' : 'odd')([1, 2, 3, 4]);
@@ -191,11 +180,11 @@ export const countBy =
   };
 
 /**
- * Particiona array em dois baseado em predicado
+ * Splits an array into two arrays based on a predicate (curried).
+ * The first array contains elements that pass; the second those that do not.
  *
  * @example
- * const isEven = (x: number) => x % 2 === 0;
- * partition(isEven)([1, 2, 3, 4]);
+ * partition((x: number) => x % 2 === 0)([1, 2, 3, 4]);
  * // [[2, 4], [1, 3]]
  */
 export const partition =
@@ -204,59 +193,50 @@ export const partition =
     const truthy: T[] = [];
     const falsy: T[] = [];
     for (const item of arr) {
-      if (predicate(item)) {
-        truthy.push(item);
-      } else {
-        falsy.push(item);
-      }
+      if (predicate(item)) truthy.push(item);
+      else falsy.push(item);
     }
     return [truthy, falsy];
   };
 
-/**
- * Achata array em um nível
- *
- * @example
- * flatten()([[1, 2], [3, 4]]); // [1, 2, 3, 4]
- */
-export const flatten =
-  <T>() =>
-  (arr: T[][]): T[] =>
-    arr.flat();
+// ============================================================================
+// FLATTEN / RESHAPE
+// ============================================================================
 
 /**
- * Achata array profundamente
+ * Flattens an array one level deep.
  *
  * @example
- * flattenDeep()([1, [2, [3, [4]]]]); // [1, 2, 3, 4]
+ * flatten([[1, 2], [3, 4]]); // [1, 2, 3, 4]
  */
-export const flattenDeep =
-  <T>() =>
-  (arr: unknown[]): T[] =>
-    arr.flat(Infinity) as T[];
+export const flatten = <T>(arr: T[][]): T[] => arr.flat();
 
 /**
- * Zip - combina dois arrays em tuplas
+ * Recursively flattens a nested array.
  *
  * @example
- * zip([1, 2, 3], ['a', 'b', 'c']);
- * // [[1, 'a'], [2, 'b'], [3, 'c']]
+ * flattenDeep([1, [2, [3, [4]]]]); // [1, 2, 3, 4]
+ */
+export const flattenDeep = <T>(arr: unknown[]): T[] => arr.flat(Infinity) as T[];
+
+/**
+ * Combines two arrays into an array of tuples, truncated to the shorter length.
+ *
+ * @example
+ * zip([1, 2, 3], ['a', 'b', 'c']); // [[1,'a'], [2,'b'], [3,'c']]
  */
 export const zip = <T, U>(arr1: T[], arr2: U[]): Array<[T, U]> => {
   const length = Math.min(arr1.length, arr2.length);
   const result: Array<[T, U]> = [];
-  for (let i = 0; i < length; i++) {
-    result.push([arr1[i], arr2[i]]);
-  }
+  for (let i = 0; i < length; i++) result.push([arr1[i], arr2[i]]);
   return result;
 };
 
 /**
- * Unzip - separa array de tuplas em dois arrays
+ * Splits an array of tuples into two separate arrays.
  *
  * @example
- * unzip([[1, 'a'], [2, 'b'], [3, 'c']]);
- * // [[1, 2, 3], ['a', 'b', 'c']]
+ * unzip([[1, 'a'], [2, 'b']]); // [[1, 2], ['a', 'b']]
  */
 export const unzip = <T, U>(arr: Array<[T, U]>): [T[], U[]] => {
   const first: T[] = [];
@@ -269,7 +249,7 @@ export const unzip = <T, U>(arr: Array<[T, U]>): [T[], U[]] => {
 };
 
 /**
- * Chunk - divide array em pedaços de tamanho N
+ * Splits an array into chunks of size N (curried).
  *
  * @example
  * chunk(2)([1, 2, 3, 4, 5]); // [[1, 2], [3, 4], [5]]
@@ -278,23 +258,28 @@ export const chunk =
   (size: number) =>
   <T>(arr: T[]): T[][] => {
     const result: T[][] = [];
-    for (let i = 0; i < arr.length; i += size) {
-      result.push(arr.slice(i, i + size));
-    }
+    for (let i = 0; i < arr.length; i += size) result.push(arr.slice(i, i + size));
     return result;
   };
 
+// ============================================================================
+// UTILITIES
+// ============================================================================
+
 /**
- * Removes falsy values from an array (null, undefined, false, 0, '').
+ * Removes falsy values (`null`, `undefined`, `false`, `0`, `''`) from an array.
  *
  * @example
- * compact([0, 1, false, 2, '', 3, null, undefined]);
- * // [1, 2, 3]
+ * compact([0, 1, false, 2, '', 3, null, undefined]); // [1, 2, 3]
  */
 export const compact = <T>(arr: Array<T | null | undefined | false | 0 | ''>): T[] =>
   arr.filter(Boolean) as T[];
 
 /**
- * Verifica se array tem elementos
+ * Returns true if the value is a non-empty array.
+ *
+ * @example
+ * hasItems([1, 2]); // true
+ * hasItems([]);     // false
  */
 export const hasItems = <T>(arr: T[]): boolean => Array.isArray(arr) && arr.length > 0;
