@@ -1,0 +1,175 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-*'   # pre-releases: v1.2.3-beta.1
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history for changelog generation
+
+      - name: Validate tag matches package.json version
+        run: |
+          TAG="${GITHUB_REF_NAME}"            # e.g. v1.2.3
+          PKG_VERSION="v$(node -p "require('./package.json').version")"
+          echo "Tag:     $TAG"
+          echo "package: $PKG_VERSION"
+          if [ "$TAG" != "$PKG_VERSION" ]; then
+            echo "ERROR: git tag '$TAG' does not match package.json version '$PKG_VERSION'"
+            echo "Bump the version in package.json and commit before tagging."
+            exit 1
+          fi
+
+      - name: Generate changelog since last tag
+        id: changelog
+        run: |
+          CURRENT_TAG="${GITHUB_REF_NAME}"
+          PREV_TAG=$(git tag --sort=-version:refname | grep -E '^v[0-9]' | sed -n '2p')
+
+          if [ -z "$PREV_TAG" ]; then
+            RANGE="HEAD"
+            echo "No previous tag found — listing all commits"
+          else
+            RANGE="${PREV_TAG}..HEAD"
+            echo "Changelog range: $PREV_TAG → $CURRENT_TAG"
+          fi
+
+          # Build changelog grouped by conventional commit type
+          python3 - "$RANGE" <<'PYEOF'
+          import subprocess, sys, re
+
+          range_arg = sys.argv[1]
+          cmd = ["git", "log", range_arg, "--pretty=format:%s|%h", "--no-merges"]
+          lines = subprocess.check_output(cmd).decode().strip().split("\n")
+
+          sections = {
+              "feat":     ("Features", []),
+              "fix":      ("Bug Fixes", []),
+              "refactor": ("Refactoring", []),
+              "perf":     ("Performance", []),
+              "docs":     ("Documentation", []),
+              "test":     ("Tests", []),
+              "ci":       ("CI", []),
+              "chore":    ("Chores", []),
+          }
+          other = []
+
+          for line in lines:
+              if not line.strip():
+                  continue
+              parts = line.rsplit("|", 1)
+              msg = parts[0].strip()
+              sha = parts[1].strip() if len(parts) > 1 else ""
+              m = re.match(r'^(\w+)(?:\(([^)]+)\))?: (.+)$', msg)
+              if m:
+                  t, scope, desc = m.group(1), m.group(2), m.group(3)
+                  entry = f"- **{scope}:** {desc} (`{sha}`)" if scope else f"- {desc} (`{sha}`)"
+                  if t in sections:
+                      sections[t][1].append(entry)
+                  else:
+                      other.append(f"- {msg} (`{sha}`)")
+              else:
+                  other.append(f"- {msg} (`{sha}`)")
+
+          out = []
+          for key, (title, entries) in sections.items():
+              if entries:
+                  out.append(f"### {title}\n\n" + "\n".join(entries))
+          if other:
+              out.append("### Other\n\n" + "\n".join(other))
+
+          print("\n\n".join(out) if out else "_No changes_")
+          PYEOF
+
+      - name: Capture changelog output
+        id: notes
+        run: |
+          CURRENT_TAG="${GITHUB_REF_NAME}"
+          PREV_TAG=$(git tag --sort=-version:refname | grep -E '^v[0-9]' | sed -n '2p')
+          RANGE="${PREV_TAG:+${PREV_TAG}..HEAD}"
+          RANGE="${RANGE:-HEAD}"
+
+          NOTES=$(python3 - "$RANGE" <<'PYEOF'
+          import subprocess, sys, re
+
+          range_arg = sys.argv[1]
+          cmd = ["git", "log", range_arg, "--pretty=format:%s|%h", "--no-merges"]
+          lines = subprocess.check_output(cmd).decode().strip().split("\n")
+
+          sections = {
+              "feat":     ("Features", []),
+              "fix":      ("Bug Fixes", []),
+              "refactor": ("Refactoring", []),
+              "perf":     ("Performance", []),
+              "docs":     ("Documentation", []),
+              "test":     ("Tests", []),
+              "ci":       ("CI", []),
+              "chore":    ("Chores", []),
+          }
+          other = []
+
+          for line in lines:
+              if not line.strip():
+                  continue
+              parts = line.rsplit("|", 1)
+              msg = parts[0].strip()
+              sha = parts[1].strip() if len(parts) > 1 else ""
+              m = re.match(r'^(\w+)(?:\(([^)]+)\))?: (.+)$', msg)
+              if m:
+                  t, scope, desc = m.group(1), m.group(2), m.group(3)
+                  entry = f"- **{scope}:** {desc} (`{sha}`)" if scope else f"- {desc} (`{sha}`)"
+                  if t in sections:
+                      sections[t][1].append(entry)
+                  else:
+                      other.append(f"- {msg} (`{sha}`)")
+              else:
+                  other.append(f"- {msg} (`{sha}`)")
+
+          out = []
+          for key, (title, entries) in sections.items():
+              if entries:
+                  out.append(f"### {title}\n\n" + "\n".join(entries))
+          if other:
+              out.append("### Other\n\n" + "\n".join(other))
+
+          print("\n\n".join(out) if out else "_No changes_")
+          PYEOF
+          )
+
+          # Write to file to avoid quoting hell
+          echo "$NOTES" > /tmp/release_notes.md
+          echo "Release notes written ($(wc -l < /tmp/release_notes.md) lines)"
+
+      - name: Create GitHub Release
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const tag = context.ref.replace('refs/tags/', '');
+            const isPrerelease = tag.includes('-');
+            const notes = fs.readFileSync('/tmp/release_notes.md', 'utf8');
+
+            const { data: release } = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: tag,
+              name: tag,
+              body: notes,
+              prerelease: isPrerelease,
+              draft: false,
+            });
+
+            console.log(`Release created: ${release.html_url}`);
+            console.log(`Prerelease: ${isPrerelease}`);

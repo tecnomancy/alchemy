@@ -43,6 +43,10 @@
       "import": "./dist/composition.js"
     }
   },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
   "files": ["dist", "README.md", "LICENSE"],
   "scripts": {
     "build": "tsc",

@@ -2,7 +2,13 @@ name: PR Sync
 
 on:
   pull_request:
-    types: [opened, edited, reopened]
+    types: [opened, edited, reopened, closed]
+
+env:
+  PROJECT_ID: PVT_kwHOAPDgbs4BQglq
+  STATUS_FIELD: PVTSSF_lAHOAPDgbs4BQglqzg-m2Sc
+  STATUS_IN_REVIEW: c999db95
+  STATUS_DONE: c841d7a3
 
 jobs:
   sync:
@@ -20,8 +26,9 @@ jobs:
           script: |
             const pr = context.payload.pull_request;
             const body = pr.body || '';
+            const isMerged = pr.merged === true;
+            const isClosed = context.payload.action === 'closed';
 
-            // Extract linked issue number from "Closes #N" / "Fixes #N" / "Resolves #N"
             const match = body.match(/(?:closes|fixes|resolves)\s+#(\d+)/i);
             if (!match) {
               console.log('No linked issue found in PR body — skipping sync');
@@ -37,7 +44,7 @@ jobs:
               issue_number: issueNumber,
             });
 
-            // Sync labels (skip any that don't exist in the repo)
+            // Sync labels
             if (issue.labels.length > 0) {
               const labelNames = issue.labels.map(l => l.name);
               try {
@@ -68,9 +75,7 @@ jobs:
               }
             }
 
-            // Add PR to mago-office project board via GraphQL
-            // Requires GH_PROJECT_TOKEN secret with project:write scope.
-            // If the secret is absent, this step is skipped gracefully.
+            // Project board lifecycle
             const projectToken = process.env.GH_PROJECT_TOKEN;
             if (!projectToken) {
               console.log('GH_PROJECT_TOKEN not configured — skipping project board sync');
@@ -79,21 +84,73 @@ jobs:
 
             const { graphql } = require('@octokit/graphql');
             const gql = graphql.defaults({ headers: { authorization: `token ${projectToken}` } });
-            const prNodeId = pr.node_id;
-            try {
-              await gql(`
-                mutation($projectId: ID!, $contentId: ID!) {
-                  addProjectV2ItemById(input: { projectId: $projectId, contentId: $contentId }) {
-                    item { id }
+
+            const PROJECT_ID = process.env.PROJECT_ID;
+            const STATUS_FIELD = process.env.STATUS_FIELD;
+
+            async function findProjectItem(contentNodeId) {
+              try {
+                const res = await gql(`
+                  query($projectId: ID!) {
+                    node(id: $projectId) {
+                      ... on ProjectV2 {
+                        items(first: 100) {
+                          nodes { id content { ... on Issue { id } ... on PullRequest { id } } }
+                        }
+                      }
+                    }
                   }
+                `, { projectId: PROJECT_ID });
+                return res.node.items.nodes.find(i => i.content?.id === contentNodeId)?.id ?? null;
+              } catch {
+                return null;
+              }
+            }
+
+            async function setStatus(itemId, statusOptionId) {
+              await gql(`
+                mutation($proj: ID!, $item: ID!, $field: ID!, $val: String!) {
+                  updateProjectV2ItemFieldValue(input: {
+                    projectId: $proj, itemId: $item,
+                    fieldId: $field, value: { singleSelectOptionId: $val }
+                  }) { projectV2Item { id } }
                 }
-              `, {
-                projectId: 'PVT_kwHOAPDgbs4BQglq',
-                contentId: prNodeId,
-              });
-              console.log('PR added to mago-office project board');
+              `, { proj: PROJECT_ID, item: itemId, field: STATUS_FIELD, val: statusOptionId });
+            }
+
+            try {
+              // Add PR to project board
+              const prNodeId = pr.node_id;
+              let prItemId = await findProjectItem(prNodeId);
+              if (!prItemId) {
+                const added = await gql(`
+                  mutation($projectId: ID!, $contentId: ID!) {
+                    addProjectV2ItemById(input: { projectId: $projectId, contentId: $contentId }) {
+                      item { id }
+                    }
+                  }
+                `, { projectId: PROJECT_ID, contentId: prNodeId });
+                prItemId = added.addProjectV2ItemById.item.id;
+                console.log('PR added to mago-office project board');
+              }
+
+              // Move linked issue through lifecycle
+              const issueItemId = await findProjectItem(issue.node_id);
+              if (issueItemId) {
+                if (isClosed && isMerged) {
+                  await setStatus(issueItemId, process.env.STATUS_DONE);
+                  console.log(`Issue #${issueNumber} → Done`);
+                } else if (!isClosed) {
+                  await setStatus(issueItemId, process.env.STATUS_IN_REVIEW);
+                  console.log(`Issue #${issueNumber} → InReview`);
+                }
+              }
             } catch (err) {
-              console.log(`Could not add to project board: ${err.message}`);
+              console.log(`Project board error: ${err.message}`);
             }
         env:
           GH_PROJECT_TOKEN: ${{ secrets.GH_PROJECT_TOKEN }}
+          PROJECT_ID: ${{ env.PROJECT_ID }}
+          STATUS_FIELD: ${{ env.STATUS_FIELD }}
+          STATUS_IN_REVIEW: ${{ env.STATUS_IN_REVIEW }}
+          STATUS_DONE: ${{ env.STATUS_DONE }}

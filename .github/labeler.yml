@@ -1,0 +1,69 @@
+result:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'src/result.ts'
+      - 'src/_internal/result*.ts'
+      - 'tests/result.test.ts'
+
+option:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'src/option.ts'
+      - 'tests/option.test.ts'
+
+array:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'src/array.ts'
+      - 'src/_internal/array*.ts'
+      - 'tests/array.test.ts'
+
+object:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'src/object.ts'
+      - 'src/_internal/object*.ts'
+      - 'tests/object.test.ts'
+
+string:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'src/string.ts'
+      - 'src/_internal/string*.ts'
+      - 'tests/string.test.ts'
+
+async:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'src/async.ts'
+      - 'src/_internal/async*.ts'
+      - 'tests/async.test.ts'
+
+composition:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'src/composition.ts'
+      - 'src/_internal/pipe.ts'
+      - 'src/_internal/compose.ts'
+      - 'src/_internal/fn-utils.ts'
+      - 'tests/composition.test.ts'
+
+predicates:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'src/predicates.ts'
+      - 'tests/predicates.test.ts'
+
+documentation:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/*.md'
+      - 'docs/**'
+
+ci:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '.github/**'
+      - 'tsconfig*.json'
+      - 'package*.json'
+      - 'vitest.config*'

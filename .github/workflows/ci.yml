@@ -8,7 +8,7 @@ on:
 
 jobs:
   ci:
-    name: Type-check, Test & Build
+    name: Type-check, Test & Build (${{ matrix.node-version }})
     runs-on: ubuntu-latest
 
     strategy:
@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
@@ -27,16 +27,46 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Security audit
+        run: npm audit --audit-level=moderate
+
       - name: Type-check
         run: npm run type-check
 
       - name: Test with coverage
         run: npm run test:coverage
 
+      - name: Upload coverage (Node 22 only)
+        if: matrix.node-version == 22
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-lcov
+          path: coverage/lcov.info
+          retention-days: 7
+
       - name: Build
         run: npm run build
 
-      - name: Check bundle size
+      - name: Verify package contents (dry-run)
         run: |
-          SIZE=$(du -sh dist/ | cut -f1)
-          echo "Bundle size: $SIZE"
+          echo "=== Files that would be published ==="
+          npm pack --dry-run 2>&1 | grep -E "^npm notice"
+
+      - name: Bundle size
+        run: |
+          SIZE_BYTES=$(du -sb dist/ | cut -f1)
+          SIZE_KB=$(echo "scale=1; $SIZE_BYTES / 1024" | bc)
+          echo "Bundle size: ${SIZE_KB} KB"
+          # Fail if dist grows beyond 400 KB (current ~280 KB unpacked with _internal)
+          if [ "$SIZE_BYTES" -gt 409600 ]; then
+            echo "ERROR: Bundle size ${SIZE_KB} KB exceeds 400 KB limit"
+            exit 1
+          fi
+
+      - name: Upload dist artifact (Node 22 only)
+        if: matrix.node-version == 22
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 1

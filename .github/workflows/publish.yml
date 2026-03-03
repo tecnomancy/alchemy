@@ -2,20 +2,20 @@ name: Publish to npm
 
 on:
   release:
-    types: [created]
+    types: [published]   # fires for both full releases and pre-releases
 
 jobs:
   publish:
-    name: Publish
+    name: Publish to npm
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write
+      id-token: write   # required for --provenance
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Use Node.js 22
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -24,6 +24,17 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Validate tag matches package.json version
+        run: |
+          TAG="${{ github.ref_name }}"
+          PKG_VERSION="v$(node -p "require('./package.json').version")"
+          echo "Tag:     $TAG"
+          echo "package: $PKG_VERSION"
+          if [ "$TAG" != "$PKG_VERSION" ]; then
+            echo "ERROR: release tag '$TAG' does not match package.json version '$PKG_VERSION'"
+            exit 1
+          fi
 
       - name: Type-check
         run: npm run type-check
@@ -34,7 +45,20 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Publish
-        run: npm publish --access public
+      - name: Verify package contents
+        run: npm pack --dry-run
+
+      - name: Publish (stable)
+        if: "!contains(github.ref_name, '-')"
+        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish (pre-release)
+        if: "contains(github.ref_name, '-')"
+        run: |
+          # Extract dist-tag from pre-release suffix: v1.0.0-beta.1 → beta
+          DIST_TAG=$(echo "${{ github.ref_name }}" | sed 's/.*-\([a-z]*\).*/\1/')
+          npm publish --access public --provenance --tag "$DIST_TAG"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
