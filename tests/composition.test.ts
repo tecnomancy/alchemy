@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
-  pipe, compose, curry,
+  pipe, compose, flow, curry,
   identity, constant, tap, prop,
   memoize, flip, once, negate, partial, after, before,
 } from '../src/composition.js';
@@ -203,5 +203,40 @@ describe('before', () => {
     const fn = before(3, () => ++count);
     fn(); fn(); fn(); fn();
     expect(count).toBe(2);
+  });
+});
+
+describe('flow', () => {
+  it('composes functions left-to-right and returns a function', () => {
+    const process = flow(
+      (s: string) => s.split(' '),
+      (arr: string[]) => arr.length,
+      (n: number) => n > 1,
+    );
+    expect(process('hello world')).toBe(true);
+    expect(process('hello')).toBe(false);
+  });
+
+  it('passes through a single function', () => {
+    const double = flow((n: number) => n * 2);
+    expect(double(5)).toBe(10);
+  });
+
+  it('composes three functions left-to-right', () => {
+    const transform = flow(
+      (n: number) => n + 1,
+      (n: number) => n * 2,
+      (n: number) => -n,
+    );
+    // (3 + 1) * 2 = 8, -8
+    expect(transform(3)).toBe(-8);
+  });
+
+  it('infers types correctly across steps', () => {
+    const result: boolean = flow(
+      (n: number) => String(n),
+      (s: string) => s.length > 1,
+    )(42);
+    expect(result).toBe(true);
   });
 });
