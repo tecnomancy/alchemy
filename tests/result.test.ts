@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   Ok, Err,
   isOk, isErr,
@@ -10,6 +10,8 @@ import {
   tryCatch, tryCatchAsync,
   fromPromise,
   validateAll, validateAny,
+  mapResultAsync, flatMapAsync,
+  type Result,
 } from '../src/result.js';
 
 describe('Result — constructors', () => {
@@ -41,38 +43,41 @@ describe('Result — transformations', () => {
   });
 
   it('mapResult passes Err through', () => {
-    const r = mapResult((n: number) => n * 2)(Err('e'));
+    const r = mapResult((n: number) => n * 2)(Err<number, string>('e'));
     expect(isErr(r)).toBe(true);
   });
 
   it('mapErr transforms Err value', () => {
-    const r = mapErr((e: string) => e.toUpperCase())(Err('oops'));
+    const r = mapErr((e: string) => e.toUpperCase())(Err<number, string>('oops'));
     if (!r.ok) expect(r.error).toBe('OOPS');
   });
 
   it('flatMap chains Ok results', () => {
-    const divide = (n: number) => n === 0 ? Err('zero') : Ok(100 / n);
-    expect(unwrap(flatMap(divide)(Ok(5)))).toBe(20);
+    const divide = (n: number): Result<number, string> =>
+      n === 0 ? Err('zero') : Ok(100 / n);
+    expect(unwrap(flatMap(divide)(Ok<number, string>(5)))).toBe(20);
   });
 
   it('flatMap short-circuits on Err', () => {
-    const r = flatMap((n: number) => Ok(n * 2))(Err('e'));
+    const r = flatMap((n: number): Result<number, string> => Ok(n * 2))(
+      Err<number, string>('e'),
+    );
     expect(isErr(r)).toBe(true);
   });
 
   it('andThen is an alias for flatMap', () => {
-    expect(unwrap(andThen((n: number) => Ok(n + 1))(Ok(9)))).toBe(10);
+    expect(unwrap(andThen((n: number): Result<number, string> => Ok(n + 1))(Ok<number, string>(9)))).toBe(10);
   });
 });
 
 describe('Result — match', () => {
   it('calls onOk branch', () => {
-    const msg = match((v: number) => `ok:${v}`, (e: string) => `err:${e}`)(Ok(42));
+    const msg = match((v: number) => `ok:${v}`, (e: string) => `err:${e}`)(Ok<number, string>(42));
     expect(msg).toBe('ok:42');
   });
 
   it('calls onErr branch', () => {
-    const msg = match((v: number) => `ok:${v}`, (e: string) => `err:${e}`)(Err('boom'));
+    const msg = match((v: number) => `ok:${v}`, (e: string) => `err:${e}`)(Err<number, string>('boom'));
     expect(msg).toBe('err:boom');
   });
 });
@@ -87,39 +92,39 @@ describe('Result — unwrap variants', () => {
   });
 
   it('unwrapOr returns default on Err', () => {
-    expect(unwrapOr(0)(Err('x'))).toBe(0);
+    expect(unwrapOr(0)(Err<number, string>('x'))).toBe(0);
     expect(unwrapOr(0)(Ok(99))).toBe(99);
   });
 
   it('unwrapOrElse computes fallback', () => {
-    expect(unwrapOrElse((e: string) => e.length)(Err('abc'))).toBe(3);
+    expect(unwrapOrElse((e: string) => e.length)(Err<number, string>('abc'))).toBe(3);
   });
 });
 
 describe('Result — combinators', () => {
   it('combineAll returns Ok of all values', () => {
-    expect(unwrap(combineAll([Ok(1), Ok(2), Ok(3)]))).toEqual([1, 2, 3]);
+    expect(unwrap(combineAll([Ok<number, string>(1), Ok<number, string>(2), Ok<number, string>(3)]))).toEqual([1, 2, 3]);
   });
 
   it('combineAll fails on first Err', () => {
-    const r = combineAll([Ok(1), Err('e1'), Ok(3)]);
+    const r = combineAll([Ok<number, string>(1), Err<number, string>('e1'), Ok<number, string>(3)]);
     expect(isErr(r)).toBe(true);
     if (!r.ok) expect(r.error).toBe('e1');
   });
 
   it('combineTwo merges two Ok values', () => {
-    const r = combineTwo((a: number, b: number) => a + b)(Ok(3), Ok(4));
+    const r = combineTwo((a: number, b: number) => a + b)(Ok<number, string>(3), Ok<number, string>(4));
     expect(unwrap(r)).toBe(7);
   });
 
   it('collectErrors collects all errors', () => {
-    const r = collectErrors([Ok(1), Err('e1'), Ok(2), Err('e2')]);
+    const r = collectErrors([Ok<number, string>(1), Err<number, string>('e1'), Ok<number, string>(2), Err<number, string>('e2')]);
     expect(isErr(r)).toBe(true);
     if (!r.ok) expect(r.error).toEqual(['e1', 'e2']);
   });
 
   it('collectErrors returns Ok if no errors', () => {
-    const r = collectErrors([Ok(1), Ok(2)]);
+    const r = collectErrors([Ok<number, string>(1), Ok<number, string>(2)]);
     expect(unwrap(r)).toEqual([1, 2]);
   });
 });
@@ -149,8 +154,10 @@ describe('Result — async', () => {
 });
 
 describe('Result — validation', () => {
-  const isPositive = (n: number) => n > 0 ? Ok(n) : Err('not positive');
-  const isEven = (n: number) => n % 2 === 0 ? Ok(n) : Err('not even');
+  const isPositive = (n: number): Result<number, string> =>
+    n > 0 ? Ok(n) : Err('not positive');
+  const isEven = (n: number): Result<number, string> =>
+    n % 2 === 0 ? Ok(n) : Err('not even');
 
   it('validateAll passes all validators', () => {
     expect(isOk(validateAll([isPositive, isEven])(4))).toBe(true);
@@ -163,10 +170,48 @@ describe('Result — validation', () => {
   });
 
   it('validateAny passes if at least one validator succeeds', () => {
-    expect(isOk(validateAny([isPositive, isEven])(3))).toBe(true); // positive
+    expect(isOk(validateAny([isPositive, isEven])(3))).toBe(true);
   });
 
   it('validateAny fails if all validators fail', () => {
     expect(isErr(validateAny([isPositive, isEven])(-3))).toBe(true);
+  });
+});
+
+describe('mapResultAsync', () => {
+  it('transforms the value of Ok asynchronously', async () => {
+    const result = await mapResultAsync(async (n: number) => n * 2)(Ok<number, string>(5));
+    expect(isOk(result)).toBe(true);
+    if (isOk(result)) expect(result.value).toBe(10);
+  });
+
+  it('passes Err through without calling the function', async () => {
+    const fn = vi.fn(async (n: number) => n * 2);
+    const result = await mapResultAsync(fn)(Err<number, string>('oops'));
+    expect(isErr(result)).toBe(true);
+    expect(fn).not.toHaveBeenCalled();
+  });
+});
+
+describe('flatMapAsync', () => {
+  const safeSqrt = async (n: number): Promise<Result<number, string>> =>
+    n >= 0 ? Ok(Math.sqrt(n)) : Err('negative');
+
+  it('chains an async Result-returning function on Ok', async () => {
+    const result = await flatMapAsync(safeSqrt)(Ok<number, string>(16));
+    expect(isOk(result)).toBe(true);
+    if (isOk(result)) expect(result.value).toBe(4);
+  });
+
+  it('short-circuits on Err without calling the function', async () => {
+    const fn = vi.fn(async (n: number): Promise<Result<number, string>> => Ok(n));
+    const result = await flatMapAsync(fn)(Err<number, string>('already failed'));
+    expect(isErr(result)).toBe(true);
+    expect(fn).not.toHaveBeenCalled();
+  });
+
+  it('propagates Err returned by the chained function', async () => {
+    const result = await flatMapAsync(safeSqrt)(Ok<number, string>(-1));
+    expect(isErr(result)).toBe(true);
   });
 });

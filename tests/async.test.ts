@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
   pipeAsync,
+  composeAsync,
   mapAsync, mapParallel, mapConcurrent,
   filterAsync, reduceAsync,
   retry, timeout, sleep,
@@ -151,5 +152,109 @@ describe('parallel', () => {
     const tasks = [1, 2, 3].map(n => async () => n * 10);
     const results = await parallel(tasks);
     expect(results).toEqual([10, 20, 30]);
+  });
+});
+
+describe('debounceAsync', () => {
+  type NumFn = (n: number) => Promise<number>;
+
+  it('only calls the function once for rapid successive calls', async () => {
+    const inner = vi.fn(async (n: number) => n * 2);
+    const debounced = debounceAsync<[number], number>(50)(inner as NumFn);
+
+    debounced(1);
+    debounced(2);
+    const result = await debounced(3);
+
+    expect(result).toBe(6);
+    expect(inner).toHaveBeenCalledTimes(1);
+    expect(inner).toHaveBeenCalledWith(3);
+  });
+
+  it('calls the function again after the delay has elapsed', async () => {
+    const inner = vi.fn(async (n: number) => n * 2);
+    const debounced = debounceAsync<[number], number>(30)(inner as NumFn);
+
+    await debounced(1);
+    await sleep(40);
+    await debounced(2);
+
+    expect(inner).toHaveBeenCalledTimes(2);
+    expect(inner).toHaveBeenNthCalledWith(1, 1);
+    expect(inner).toHaveBeenNthCalledWith(2, 2);
+  });
+});
+
+describe('throttleAsync', () => {
+  type NumFn = (n: number) => Promise<number>;
+
+  it('executes immediately on first call', async () => {
+    const inner = vi.fn(async (n: number) => n * 2);
+    const throttled = throttleAsync<[number], number>(100)(inner as NumFn);
+
+    const result = await throttled(5);
+
+    expect(result).toBe(10);
+    expect(inner).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns the same promise for calls within the delay window', async () => {
+    const inner = vi.fn(async (n: number) => n * 2);
+    const throttled = throttleAsync<[number], number>(100)(inner as NumFn);
+
+    const p1 = throttled(1);
+    const p2 = throttled(2);
+
+    const [r1, r2] = await Promise.all([p1, p2]);
+
+    expect(r1).toBe(r2);
+    expect(inner).toHaveBeenCalledTimes(1);
+  });
+
+  it('executes again after the delay has elapsed', async () => {
+    const inner = vi.fn(async (n: number) => n * 2);
+    const throttled = throttleAsync<[number], number>(30)(inner as NumFn);
+
+    await throttled(1);
+    await sleep(40);
+    const result = await throttled(2);
+
+    expect(result).toBe(4);
+    expect(inner).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('composeAsync', () => {
+  it('composes two async functions right to left', async () => {
+    const add1 = async (n: number) => n + 1;
+    const double = async (n: number) => n * 2;
+    // composeAsync(double, add1)(5) = double(add1(5)) = double(6) = 12
+    const transform = composeAsync(
+      double as (arg: unknown) => Promise<unknown>,
+      add1 as (arg: unknown) => Promise<unknown>,
+    );
+    const result = await transform(5);
+    expect(result).toBe(12);
+  });
+
+  it('composes three async functions right to left', async () => {
+    const add1 = async (n: number) => n + 1;
+    const double = async (n: number) => n * 2;
+    const negate = async (n: number) => -n;
+    // composeAsync(negate, double, add1)(3) = negate(double(add1(3))) = negate(double(4)) = negate(8) = -8
+    const transform = composeAsync(
+      negate as (arg: unknown) => Promise<unknown>,
+      double as (arg: unknown) => Promise<unknown>,
+      add1 as (arg: unknown) => Promise<unknown>,
+    );
+    const result = await transform(3);
+    expect(result).toBe(-8);
+  });
+
+  it('passes the value through when given a single function', async () => {
+    const double = async (n: number) => n * 2;
+    const transform = composeAsync(double as (arg: unknown) => Promise<unknown>);
+    const result = await transform(7);
+    expect(result).toBe(14);
   });
 });
