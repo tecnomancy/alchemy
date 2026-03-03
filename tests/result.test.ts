@@ -12,8 +12,10 @@ import {
   validateAll, validateAny,
   mapResultAsync, flatMapAsync,
   tapResult, tapError, orElse, fromNullableResult,
+  bimap, mapLeft, swap, toOption,
   type Result,
 } from '../src/result.js';
+import { Some, None } from '../src/option.js';
 
 describe('Result — constructors', () => {
   it('Ok creates a success', () => {
@@ -312,4 +314,24 @@ describe('fromNullableResult', () => {
     const r = lift(undefined);
     expect(isErr(r)).toBe(true);
   });
+});
+
+describe('bimap', () => {
+  it('maps Ok value', () => expect(bimap((n: number) => n * 2, (e: string) => e.toUpperCase())(Ok(5))).toEqual(Ok(10)));
+  it('maps Err value', () => expect(bimap((n: number) => n * 2, (e: string) => e.toUpperCase())(Err('fail'))).toEqual(Err('FAIL')));
+});
+
+describe('mapLeft', () => {
+  it('is an alias for mapErr — transforms Err', () => expect(mapLeft((e: string) => e.toUpperCase())(Err('oops'))).toEqual(Err('OOPS')));
+  it('passes Ok through unchanged', () => expect(mapLeft((e: string) => e.toUpperCase())(Ok(1))).toEqual(Ok(1)));
+});
+
+describe('swap', () => {
+  it('swaps Ok to Err', () => expect(swap(Ok(1))).toEqual(Err(1)));
+  it('swaps Err to Ok', () => expect(swap(Err('e'))).toEqual(Ok('e')));
+});
+
+describe('toOption', () => {
+  it('converts Ok to Some', () => expect(toOption(Ok(42))).toEqual(Some(42)));
+  it('converts Err to None', () => expect(toOption(Err('e'))).toEqual(None));
 });

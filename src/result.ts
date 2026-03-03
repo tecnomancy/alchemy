@@ -336,6 +336,56 @@ export const tryCatch =
     }
   };
 
+// ============================================================================
+// OPTION INTEROP (import kept at the bottom to avoid circular dependency)
+// ============================================================================
+
+import type { Option } from './option.js';
+import { Some, None } from './option.js';
+
+/**
+ * Transform both branches of a Result simultaneously.
+ * Applies `onOk` if Ok, or `onErr` if Err.
+ *
+ * @example
+ * bimap((n: number) => n * 2, (e: string) => e.toUpperCase())(Ok(5));   // Ok(10)
+ * bimap((n: number) => n * 2, (e: string) => e.toUpperCase())(Err('fail')); // Err('FAIL')
+ */
+export const bimap =
+  <T, E, U, F>(onOk: (v: T) => U, onErr: (e: E) => F) =>
+  (result: Result<T, E>): Result<U, F> =>
+    isOk(result) ? Ok(onOk(result.value)) : Err(onErr(result.error));
+
+/**
+ * Alias for `mapErr` — transforms the error value if Err, passes Ok through.
+ * Provided for fp-ts / fantasy-land compatibility.
+ *
+ * @example
+ * mapLeft((e: string) => e.toUpperCase())(Err('oops')); // Err('OOPS')
+ * mapLeft((e: string) => e.toUpperCase())(Ok(1));       // Ok(1)
+ */
+export const mapLeft = mapErr;
+
+/**
+ * Swap Ok and Err — Ok becomes Err, Err becomes Ok.
+ *
+ * @example
+ * swap(Ok(1));      // Err(1)
+ * swap(Err('e'));   // Ok('e')
+ */
+export const swap = <T, E>(result: Result<T, E>): Result<E, T> =>
+  isOk(result) ? Err(result.value) : Ok(result.error);
+
+/**
+ * Convert a Result to an Option, discarding the error on Err.
+ *
+ * @example
+ * toOption(Ok(42));      // Some(42)
+ * toOption(Err('oops')); // None
+ */
+export const toOption = <T, E>(result: Result<T, E>): Option<T> =>
+  isOk(result) ? Some(result.value) : None;
+
 /**
  * Async version of tryCatch
  *
