@@ -11,13 +11,29 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 - Subpath exports for granular imports (`fp-core/result`, `fp-core/option`, etc.)
-- Full test suite for `array`, `object`, `string`, and `predicates` modules
+- Full test suite for `array`, `object`, `string`, and `predicates` modules (301 tests total)
 - Coverage tests for `mapResultAsync`, `flatMapAsync`, `debounceAsync`, `throttleAsync`, `composeAsync`
 - Coverage thresholds enforced in CI (90% lines/functions/statements, 85% branches)
+- `tapResult(fn)(result)` — side-effect on `Ok`, passes result through unchanged
+- `tapError(fn)(result)` — side-effect on `Err`, passes result through unchanged
+- `orElse(fn)(result)` — recover from `Err` by producing a new `Result`
+- `fromNullableResult(onNone)(value)` — lift a nullable value into `Result`
+- `flow(...fns)` — point-free left-to-right composition (complement to `pipe`)
+
+### Changed
+- `isNaN` renamed to `isNotANumber` — avoids shadowing the global `isNaN` built-in
+- `isFinite` renamed to `isFiniteNumber` — avoids shadowing the global `isFinite` built-in
 
 ### Fixed
 - `composeAsync` no longer mutates the caller's function array (was calling `.reverse()` in-place)
 - `unique`, `flatten`, `flattenDeep` removed unnecessary thunk layer (were `unique()([...])`, now `unique([...])`)
+- `string.reverse` now correctly handles multi-codepoint characters (emoji, surrogate pairs) using `Array.from`
+
+### Refactored (internal, no breaking changes)
+- `async.ts` split into `_internal/async-composition.ts`, `_internal/async-array.ts`, `_internal/async-control.ts`
+- `object.ts` split into `_internal/object-utils.ts`, `_internal/object-transform.ts`, `_internal/object-access.ts`
+- `string.ts` split into `_internal/string-transform.ts`, `_internal/string-query.ts`, `_internal/string-template.ts`, `_internal/string-validators.ts`
+- `composition.ts` split into `_internal/pipe.ts`, `_internal/compose.ts`, `_internal/fn-utils.ts`
 
 ---
 
@@ -28,7 +44,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 **Core modules**
 
 - `Result<T, E>` — type-safe error handling without exceptions
-  - `Ok`, `Err`, `mapResult`, `mapError`, `flatMap`, `match`, `tryCatch`, `fromPromise`, `fromNullableResult`, `andThen`, `orElse`, `unwrapOr`, `isOk`, `isErr`, `toOption`, `validateAll`, `validateAny`, `tapResult`, `tapError`, `mapResultAsync`, `flatMapAsync`, `tryCatchAsync`, `fromPromiseResult`
+  - `Ok`, `Err`, `mapResult`, `mapErr`, `flatMap`, `match`, `tryCatch`, `fromPromise`, `andThen`, `unwrapOr`, `unwrapOrElse`, `unwrap`, `isOk`, `isErr`, `combineTwo`, `combineAll`, `collectErrors`, `validateAll`, `validateAny`, `mapResultAsync`, `flatMapAsync`, `tryCatchAsync`, `fromPromise`
 - `Option<T>` — explicit nullability without null/undefined
   - `Some`, `None`, `fromNullable`, `mapOption`, `flatMapOption`, `matchOption`, `unwrapOptionOr`, `filterOption`, `optionToResult`, `resultToOption`, `tapOption`, `isSome`, `isNone`, `toNullable`
 
@@ -41,7 +57,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - `tap` — executes a side effect and passes the value through
 - `identity` — returns its argument unchanged
 - `constant` — returns a function that always returns the same value
-- `flow` — point-free left-to-right composition
+- `partial`, `flip`, `once`, `after`, `before`, `negate`, `prop`
 
 **Async**
 

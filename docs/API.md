@@ -391,6 +391,76 @@ validateAny([isZero, isPositive])(-1); // Err(['not zero', 'not positive'])
 
 ---
 
+#### `tapResult(fn)(result)`
+
+Executes a side-effect function when the result is `Ok`, then returns the original result unchanged. Useful for logging inside a pipeline without breaking the chain.
+
+**Signature:** `<T, E>(fn: (value: T) => void) => (result: Result<T, E>) => Result<T, E>`
+
+**Example:**
+```typescript
+pipe(
+  Ok(42),
+  tapResult(v => console.log('value:', v)), // logs 'value: 42'
+  mapResult(v => v * 2),
+); // Ok(84)
+
+tapResult(console.log)(Err('fail')); // no-op, returns Err('fail')
+```
+
+---
+
+#### `tapError(fn)(result)`
+
+Executes a side-effect function when the result is `Err`, then returns the original result unchanged. Useful for error logging in pipelines.
+
+**Signature:** `<T, E>(fn: (error: E) => void) => (result: Result<T, E>) => Result<T, E>`
+
+**Example:**
+```typescript
+pipe(
+  Err('something went wrong'),
+  tapError(e => console.error('error:', e)), // logs 'error: something went wrong'
+  unwrapOr(0),
+); // 0
+
+tapError(console.error)(Ok(42)); // no-op, returns Ok(42)
+```
+
+---
+
+#### `orElse(fn)(result)`
+
+Recovers from an `Err` by applying a function that returns a new `Result`. If the result is `Ok`, it passes through unchanged.
+
+**Signature:** `<T, E, F>(fn: (error: E) => Result<T, F>) => (result: Result<T, E>) => Result<T, F>`
+
+**Example:**
+```typescript
+const parseNumber = (s: string) => isNaN(Number(s)) ? Err('not a number') : Ok(Number(s));
+const fallback = (e: string) => e === 'not a number' ? Ok(0) : Err(e);
+
+orElse(fallback)(parseNumber('abc')); // Ok(0)
+orElse(fallback)(parseNumber('42'));  // Ok(42)
+```
+
+---
+
+#### `fromNullableResult(onNone)(value)`
+
+Lifts a nullable value into a `Result`. Returns `Ok(value)` when the value is non-null/non-undefined, or `Err(onNone)` otherwise.
+
+**Signature:** `<E>(onNone: E) => <T>(value: T | null | undefined) => Result<T, E>`
+
+**Example:**
+```typescript
+fromNullableResult('not found')(42);        // Ok(42)
+fromNullableResult('not found')(null);      // Err('not found')
+fromNullableResult('not found')(undefined); // Err('not found')
+```
+
+---
+
 ## Option\<T\>
 
 `import { ... } from 'fp-core/option'`
@@ -724,6 +794,27 @@ const process = compose(
 );
 process('1,2,3,4,5'); // 'Result: 15'
 ```
+
+---
+
+### `flow(...fns)`
+
+Creates a left-to-right function pipeline (point-free). Unlike `pipe`, `flow` takes only functions and returns a new function — no initial value is passed in.
+
+**Signature:** `flow<A, B, C, ...>(f1: (a: A) => B, f2: (b: B) => C, ...) => (a: A) => ...`
+
+**Example:**
+```typescript
+const process = flow(
+  (s: string) => s.split(' '),   // string → string[]
+  (arr: string[]) => arr.length, // string[] → number
+  (n: number) => n > 1,          // number → boolean
+);
+process('hello world'); // true
+process('hello');       // false
+```
+
+**See also:** `pipe` (value-first), `compose` (right-to-left)
 
 ---
 
@@ -1444,6 +1535,6 @@ const isAdminOrOwner = or(isAdmin, isOwner);
 | `isNegative(n)` | `n < 0` |
 | `isZero(n)` | `n === 0` |
 | `isInteger(n)` | `Number.isInteger(n)` |
-| `isNaN(n)` | `Number.isNaN(n)` |
-| `isFinite(n)` | `Number.isFinite(n)` |
+| `isNotANumber(n)` | `Number.isNaN(n)` |
+| `isFiniteNumber(n)` | `Number.isFinite(n)` |
 | `isInfinite(n)` | `!isFinite(n) && !isNaN(n)` |
