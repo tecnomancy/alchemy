@@ -10,13 +10,13 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
-      issues: read
+      issues: write
 
     steps:
       - name: Sync PR with linked issue
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.GH_PROJECT_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const pr = context.payload.pull_request;
             const body = pr.body || '';
@@ -55,20 +55,33 @@ jobs:
 
             // Sync milestone
             if (issue.milestone) {
-              await github.rest.issues.update({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: pr.number,
-                milestone: issue.milestone.number,
-              });
-              console.log(`Milestone synced: ${issue.milestone.title}`);
+              try {
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number,
+                  milestone: issue.milestone.number,
+                });
+                console.log(`Milestone synced: ${issue.milestone.title}`);
+              } catch (err) {
+                console.log(`Could not sync milestone (${err.message}) — skipping`);
+              }
             }
 
             // Add PR to mago-office project board via GraphQL
-            // Project node ID: PVT_kwHOAPDgbs4BQglq
+            // Requires GH_PROJECT_TOKEN secret with project:write scope.
+            // If the secret is absent, this step is skipped gracefully.
+            const projectToken = process.env.GH_PROJECT_TOKEN;
+            if (!projectToken) {
+              console.log('GH_PROJECT_TOKEN not configured — skipping project board sync');
+              return;
+            }
+
+            const { graphql } = require('@octokit/graphql');
+            const gql = graphql.defaults({ headers: { authorization: `token ${projectToken}` } });
             const prNodeId = pr.node_id;
             try {
-              await github.graphql(`
+              await gql(`
                 mutation($projectId: ID!, $contentId: ID!) {
                   addProjectV2ItemById(input: { projectId: $projectId, contentId: $contentId }) {
                     item { id }
@@ -82,3 +95,5 @@ jobs:
             } catch (err) {
               console.log(`Could not add to project board: ${err.message}`);
             }
+        env:
+          GH_PROJECT_TOKEN: ${{ secrets.GH_PROJECT_TOKEN }}
