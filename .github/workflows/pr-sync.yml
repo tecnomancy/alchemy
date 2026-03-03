@@ -37,16 +37,20 @@ jobs:
               issue_number: issueNumber,
             });
 
-            // Sync labels
+            // Sync labels (skip any that don't exist in the repo)
             if (issue.labels.length > 0) {
               const labelNames = issue.labels.map(l => l.name);
-              await github.rest.issues.addLabels({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: pr.number,
-                labels: labelNames,
-              });
-              console.log(`Labels synced: ${labelNames.join(', ')}`);
+              try {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number,
+                  labels: labelNames,
+                });
+                console.log(`Labels synced: ${labelNames.join(', ')}`);
+              } catch (err) {
+                console.log(`Could not sync labels (${err.message}) — skipping`);
+              }
             }
 
             // Sync milestone
