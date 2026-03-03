@@ -64,10 +64,15 @@ export function pipeAsync(
 }
 
 /**
- * Versão assíncrona do compose - compõe funções async da direita para esquerda
+ * Async compose — applies functions right-to-left (reverse of pipeAsync).
+ * Does not mutate the input array.
+ *
+ * @example
+ * const process = composeAsync(formatForClient, enrichWithRoles, fetchUser);
+ * await process('user-123'); // fetchUser runs first
  */
 export const composeAsync = (...fns: Array<(arg: unknown) => Promise<unknown>>) =>
-  pipeAsync(...(fns.reverse() as [(typeof fns)[0]]));
+  pipeAsync(...([...fns].reverse() as [(typeof fns)[0]]));
 
 // ============================================================================
 // ASYNC ARRAY TRANSFORMATIONS
