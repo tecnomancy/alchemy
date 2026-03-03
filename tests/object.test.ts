@@ -8,21 +8,25 @@ import {
 } from '../src/object.js';
 
 describe('pick', () => {
+  type User = { id: number; name: string; password: string };
+  const user: User = { id: 1, name: 'Alice', password: 'secret' };
+
   it('returns only the selected keys', () => {
-    const user = { id: 1, name: 'Alice', password: 'secret' };
-    expect(pick(['id', 'name'])(user)).toEqual({ id: 1, name: 'Alice' });
+    expect(pick<User, 'id' | 'name'>(['id', 'name'])(user)).toEqual({ id: 1, name: 'Alice' });
   });
 
   it('ignores keys not present in the object', () => {
-    const obj = { a: 1 };
-    expect(pick(['a', 'b'] as Array<'a'>)(obj)).toEqual({ a: 1 });
+    const obj: { a: number } = { a: 1 };
+    expect(pick<typeof obj, 'a'>(['a'])(obj)).toEqual({ a: 1 });
   });
 });
 
 describe('omit', () => {
+  type User = { id: number; name: string; password: string };
+  const user: User = { id: 1, name: 'Alice', password: 'secret' };
+
   it('excludes the specified keys', () => {
-    const user = { id: 1, name: 'Alice', password: 'secret' };
-    expect(omit(['password'])(user)).toEqual({ id: 1, name: 'Alice' });
+    expect(omit<User, 'password'>(['password'])(user)).toEqual({ id: 1, name: 'Alice' });
   });
 });
 
@@ -64,14 +68,14 @@ describe('mapValues', () => {
 describe('mapKeys', () => {
   it('transforms every key', () => {
     const obj = { a: 1, b: 2 };
-    expect(mapKeys((k: string) => k.toUpperCase())(obj)).toEqual({ A: 1, B: 2 });
+    expect(mapKeys((k) => String(k).toUpperCase())(obj)).toEqual({ A: 1, B: 2 });
   });
 });
 
 describe('filterKeys', () => {
   it('keeps keys that pass the predicate', () => {
     const obj = { name: 'Alice', _id: 1, _secret: 'x' };
-    expect(filterKeys((k: string) => !k.startsWith('_'))(obj)).toEqual({ name: 'Alice' });
+    expect(filterKeys((k) => !String(k).startsWith('_'))(obj)).toEqual({ name: 'Alice' });
   });
 });
 
@@ -107,12 +111,17 @@ describe('keys / values / entries / fromEntries', () => {
 });
 
 describe('hasKey', () => {
+  type Person = { name: string; age: number };
+
   it('returns true when the key exists', () => {
-    expect(hasKey('name')({ name: 'Alice', age: 30 })).toBe(true);
+    const person: Person = { name: 'Alice', age: 30 };
+    expect(hasKey<Person, 'name'>('name')(person)).toBe(true);
   });
 
   it('returns false when the key is absent', () => {
-    expect(hasKey('email' as 'name')({ name: 'Alice' } as { name: string; email?: string })).toBe(false);
+    type PersonWithEmail = Person & { email?: string };
+    const person: PersonWithEmail = { name: 'Alice', age: 30 };
+    expect(hasKey<PersonWithEmail, 'email'>('email')(person)).toBe(false);
   });
 });
 

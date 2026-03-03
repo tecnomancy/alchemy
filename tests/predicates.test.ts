@@ -28,11 +28,13 @@ describe('isNotNull', () => {
 
 describe('hasProperty', () => {
   it('returns true when key exists with a value', () => {
-    expect(hasProperty('name')({ name: 'Alice' })).toBe(true);
+    type WithName = { name: string };
+    expect(hasProperty<WithName, 'name'>('name')({ name: 'Alice' })).toBe(true);
   });
 
   it('returns false when value is null', () => {
-    expect(hasProperty('name')({ name: null } as { name: string | null })).toBe(false);
+    type WithNullableName = { name: string | null };
+    expect(hasProperty<WithNullableName, 'name'>('name')({ name: null })).toBe(false);
   });
 });
 
