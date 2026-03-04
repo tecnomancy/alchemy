@@ -1,0 +1,40 @@
+name: Benchmarks
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  bench:
+    name: Performance benchmarks
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run benchmarks
+        run: npm run bench -- --reporter=verbose 2>&1 | tee bench-results.txt
+
+      - name: Post results to job summary
+        run: |
+          echo "## Benchmark Results" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat bench-results.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload benchmark artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bench-results
+          path: bench-results.txt
+          retention-days: 30
