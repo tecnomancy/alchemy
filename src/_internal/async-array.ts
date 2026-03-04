@@ -127,10 +127,18 @@ export const reduceAsync =
  * and stored as an error of type `unknown`. Prefer returning `Err` from `fn`.
  *
  * @example
- * const results = await mapConcurrentResult(3, async (id) =>
+ * // All succeed
+ * const ok = await mapConcurrentResult(3, async (id) =>
  *   fetchUser(id)
- * )(userIds);
- * // Ok([user1, user2, …]) or Err([err1, err2, …])
+ * )(['1', '2', '3']);
+ * // Ok([user1, user2, user3])
+ *
+ * // Partial failures — all errors accumulated, none swallowed
+ * const mixed = await mapConcurrentResult(3, async (id) => {
+ *   const user = await fetchUser(id);
+ *   return user ? Ok(user) : Err(`not found: ${id}`);
+ * })(['1', 'bad', '3', 'missing']);
+ * // Err(['not found: bad', 'not found: missing'])
  */
 export const mapConcurrentResult =
   <T, B, E>(concurrency: number, fn: (item: T) => Promise<Result<B, E>>) =>
