@@ -29,7 +29,7 @@ import {
   flatMapAsync,
   mapResultAsync,
   match,
-} from 'fp-core';
+} from '@roxdavirox/fp-core';
 
 interface User {
   id: string;
@@ -76,8 +76,8 @@ const getEnrichedUser = async (id: string) => {
 **Use case:** Validate multiple fields, collect all errors at once instead of stopping at the first failure.
 
 ```typescript
-import { Ok, Err, validateAll, collectErrors, match } from 'fp-core';
-import type { Result } from 'fp-core';
+import { Ok, Err, validateAll, collectErrors, match } from '@roxdavirox/fp-core';
+import type { Result } from '@roxdavirox/fp-core';
 
 interface SignupForm {
   email: string;
@@ -121,9 +121,9 @@ const result = validateForm({ email: 'bad', password: 'short', age: 16 });
 **Use case:** Parse and validate a JSON config file without crashing on bad input.
 
 ```typescript
-import { tryCatch, flatMap, unwrapOrElse } from 'fp-core';
-import { Ok, Err } from 'fp-core';
-import type { Result } from 'fp-core';
+import { tryCatch, flatMap, unwrapOrElse } from '@roxdavirox/fp-core';
+import { Ok, Err } from '@roxdavirox/fp-core';
+import type { Result } from '@roxdavirox/fp-core';
 
 interface AppConfig {
   apiUrl: string;
@@ -171,8 +171,8 @@ loadConfig('not json');
 **Use case:** Read a deeply nested value that may not exist at any level without optional chaining.
 
 ```typescript
-import { getPathOr, fromNullable, mapOption, unwrapOptionOr } from 'fp-core';
-import { pipe } from 'fp-core';
+import { getPathOr, fromNullable, mapOption, unwrapOptionOr } from '@roxdavirox/fp-core';
+import { pipe } from '@roxdavirox/fp-core';
 
 interface Address {
   street?: string;
@@ -229,9 +229,9 @@ formatCity('bob');   // 'Unknown city'
 **Use case:** Run multiple async operations concurrently and collect all failures instead of stopping at the first.
 
 ```typescript
-import { mapAsyncResult, collectErrors, match } from 'fp-core';
-import { Ok, Err } from 'fp-core';
-import type { Result } from 'fp-core';
+import { mapAsyncResult, collectErrors, match } from '@roxdavirox/fp-core';
+import { Ok, Err } from '@roxdavirox/fp-core';
+import type { Result } from '@roxdavirox/fp-core';
 
 interface OrderItem {
   productId: string;
@@ -283,8 +283,8 @@ const validation = await validateOrder(order);
 **Use case:** Fetch from an unstable API with automatic retries and exponential backoff.
 
 ```typescript
-import { pipeAsync, retry, match } from 'fp-core';
-import { fromPromise } from 'fp-core';
+import { pipeAsync, retry, match } from '@roxdavirox/fp-core';
+import { fromPromise } from '@roxdavirox/fp-core';
 
 interface ApiResponse {
   data: unknown;
@@ -336,8 +336,8 @@ const processEndpoint = pipeAsync(
 **Use case:** Chain optional property accesses through a deeply nested object without intermediate null checks.
 
 ```typescript
-import { fromNullable, flatMapOption, mapOption, unwrapOptionOr } from 'fp-core';
-import { pipe } from 'fp-core';
+import { fromNullable, flatMapOption, mapOption, unwrapOptionOr } from '@roxdavirox/fp-core';
+import { pipe } from '@roxdavirox/fp-core';
 
 interface Coordinates {
   lat: number;
@@ -396,9 +396,9 @@ formatEventLocation({ name: 'Carol', upcomingEvent: { title: 'Webinar' } });
 **Use case:** Process a batch of items concurrently (bounded concurrency) and surface all failures.
 
 ```typescript
-import { mapConcurrentResult, collectErrors, match } from 'fp-core';
-import { Ok, Err } from 'fp-core';
-import type { Result } from 'fp-core';
+import { mapConcurrentResult, collectErrors, match } from '@roxdavirox/fp-core';
+import { Ok, Err } from '@roxdavirox/fp-core';
+import type { Result } from '@roxdavirox/fp-core';
 
 interface Report {
   userId: string;
@@ -449,9 +449,9 @@ const generateAllReports = async (reports: Report[]) => {
 **Use case:** Transform raw API data through a series of pure functions using `pipe`, array utilities, and object utilities.
 
 ```typescript
-import { pipe } from 'fp-core';
-import { map, filter, sortBy, groupBy } from 'fp-core';
-import { pick, mapValues } from 'fp-core';
+import { pipe } from '@roxdavirox/fp-core';
+import { map, filter, sortBy, groupBy } from '@roxdavirox/fp-core';
+import { pick, mapValues } from '@roxdavirox/fp-core';
 
 interface RawProduct {
   id: string;
@@ -502,9 +502,9 @@ const clientCatalog = pipe(
 **Use case:** Merge user-supplied config over defaults, then validate the result.
 
 ```typescript
-import { defaults, validateAll, match } from 'fp-core';
-import { Ok, Err } from 'fp-core';
-import type { Result } from 'fp-core';
+import { defaults, validateAll, match } from '@roxdavirox/fp-core';
+import { Ok, Err } from '@roxdavirox/fp-core';
+import type { Result } from '@roxdavirox/fp-core';
 
 interface ServerConfig {
   host: string;

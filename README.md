@@ -3,8 +3,8 @@
 **Functional programming primitives for TypeScript — every type inferred, zero dependencies.**
 
 [![CI](https://github.com/roxdavirox/fp-core/actions/workflows/ci.yml/badge.svg)](https://github.com/roxdavirox/fp-core/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/fp-core)](https://www.npmjs.com/package/fp-core)
-[![Bundle Size](https://img.shields.io/bundlephobia/minzip/fp-core)](https://bundlephobia.com/package/fp-core)
+[![npm](https://img.shields.io/npm/v/@roxdavirox/fp-core)](https://www.npmjs.com/package/@roxdavirox/fp-core)
+[![Bundle Size](https://img.shields.io/bundlephobia/minzip/@roxdavirox/fp-core)](https://bundlephobia.com/package/@roxdavirox/fp-core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
 ---
@@ -28,9 +28,9 @@ at every step and zero runtime dependencies.
 ## Install
 
 ```bash
-npm install fp-core
+npm install @roxdavirox/fp-core
 # or
-pnpm add fp-core
+pnpm add @roxdavirox/fp-core
 ```
 
 ---
@@ -38,7 +38,7 @@ pnpm add fp-core
 ## Quick Start
 
 ```typescript
-import { pipe, Ok, Err, Some, None, mapResult, flatMap, match } from 'fp-core';
+import { pipe, Ok, Err, Some, None, mapResult, flatMap, match } from '@roxdavirox/fp-core';
 
 // pipe — fully typed at every step
 const result = pipe(
@@ -64,7 +64,7 @@ pipe(
 );
 
 // Option — nullable without null checks
-import { fromNullable, mapOption, unwrapOptionOr } from 'fp-core';
+import { fromNullable, mapOption, unwrapOptionOr } from '@roxdavirox/fp-core';
 
 const getUser = (id: number) => fromNullable(users.find(u => u.id === id));
 
@@ -95,7 +95,7 @@ pipe(
 ### Safe API call — errors as values, no try/catch
 
 ```typescript
-import { fromPromise, flatMapAsync, match } from 'fp-core';
+import { fromPromise, flatMapAsync, match } from '@roxdavirox/fp-core';
 
 const getUser = async (id: string) => {
   const result = await fromPromise(fetch(`/api/users/${id}`).then(r => r.json()))
@@ -111,7 +111,7 @@ const getUser = async (id: string) => {
 ### Option null-safe navigation — no optional chaining noise
 
 ```typescript
-import { pipe, fromNullable, flatMapOption, mapOption, unwrapOptionOr } from 'fp-core';
+import { pipe, fromNullable, flatMapOption, mapOption, unwrapOptionOr } from '@roxdavirox/fp-core';
 
 const getEventCoords = (user: User): string =>
   pipe(
@@ -126,7 +126,7 @@ const getEventCoords = (user: User): string =>
 ### Form validation — accumulate all errors
 
 ```typescript
-import { Ok, Err, collectErrors, match } from 'fp-core';
+import { Ok, Err, collectErrors, match } from '@roxdavirox/fp-core';
 
 const validate = (form: SignupForm) =>
   match(
@@ -156,17 +156,17 @@ const validate = (form: SignupForm) =>
 
 ## Subpath Imports
 
-fp-core is fully tree-shakeable. Import the root `'fp-core'` for most use cases, or use subpath imports for explicit dependency tracking:
+fp-core is fully tree-shakeable. Import the root `'@roxdavirox/fp-core'` for most use cases, or use subpath imports for explicit dependency tracking:
 
 ```typescript
-import { Ok, Err, flatMap, mapResult } from 'fp-core/result';
-import { Some, None, fromNullable } from 'fp-core/option';
-import { pipe, compose, curry } from 'fp-core/composition';
-import { pipeAsync, retry, timeout } from 'fp-core/async';
-import { map, filter, groupBy } from 'fp-core/array';
-import { pick, omit, setPath } from 'fp-core/object';
-import { camelCase, truncate, template } from 'fp-core/string';
-import { and, or, not, isString } from 'fp-core/predicates';
+import { Ok, Err, flatMap, mapResult } from '@roxdavirox/fp-core/result';
+import { Some, None, fromNullable } from '@roxdavirox/fp-core/option';
+import { pipe, compose, curry } from '@roxdavirox/fp-core/composition';
+import { pipeAsync, retry, timeout } from '@roxdavirox/fp-core/async';
+import { map, filter, groupBy } from '@roxdavirox/fp-core/array';
+import { pick, omit, setPath } from '@roxdavirox/fp-core/object';
+import { camelCase, truncate, template } from '@roxdavirox/fp-core/string';
+import { and, or, not, isString } from '@roxdavirox/fp-core/predicates';
 ```
 
 ---

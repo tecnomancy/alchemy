@@ -1,5 +1,5 @@
 {
-  "name": "fp-core",
+  "name": "@roxdavirox/fp-core",
   "version": "0.1.0",
   "description": "Functional programming primitives for TypeScript — every type inferred, zero dependencies.",
   "type": "module",
@@ -91,6 +91,9 @@
     "url": "https://github.com/roxdavirox/fp-core/issues"
   },
   "homepage": "https://github.com/roxdavirox/fp-core#readme",
+  "publishConfig": {
+    "access": "public"
+  },
   "devDependencies": {
     "@eslint/js": "^9.39.3",
     "@types/node": "^22.0.0",
