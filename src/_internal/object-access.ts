@@ -131,10 +131,22 @@ export const updatePath =
  * Like {@link getPath} but returns a fallback value instead of `undefined`
  * when the path is missing (curried, data-last).
  *
+ * @remarks
+ * The fallback is returned whenever the resolved value is `undefined` — this
+ * includes the case where a key explicitly exists but its stored value is
+ * `undefined`. This matches the behaviour of `lodash.get` and `Ramda.pathOr`.
+ * Use {@link hasPath} when you need to distinguish "key absent" from
+ * "key present with value `undefined`".
+ *
  * @example
  * const obj = { a: { b: { c: 42 } } };
  * getPathOr(0, ['a', 'b', 'c'])(obj); // 42
- * getPathOr(0, ['a', 'b', 'x'])(obj); // 0
+ * getPathOr(0, ['a', 'b', 'x'])(obj); // 0 — path missing
+ *
+ * // Key exists but value is undefined — fallback is returned
+ * getPathOr(99, ['a'])({ a: undefined }); // 99
+ * // hasPath still reports the key as present:
+ * hasPath(['a'])({ a: undefined }); // true
  */
 export const getPathOr =
   <T>(fallback: T, path: string[]) =>

@@ -361,6 +361,10 @@ describe('getPathOr', () => {
   it('returns false correctly', () => {
     expect(getPathOr(true, ['flag'])({ flag: false })).toBe(false);
   });
+
+  it('returns fallback when key exists but value is undefined (intentional, matches lodash/Ramda)', () => {
+    expect(getPathOr(99, ['a'])({ a: undefined })).toBe(99);
+  });
 });
 
 describe('hasPath', () => {
