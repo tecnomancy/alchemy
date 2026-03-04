@@ -1,10 +1,9 @@
 # fp-core
 
-**Functional programming primitives for TypeScript. Zero dependencies. Every type inferred.**
+**Functional programming primitives for TypeScript — every type inferred, zero dependencies.**
 
 [![CI](https://github.com/roxdavirox/fp-core/actions/workflows/ci.yml/badge.svg)](https://github.com/roxdavirox/fp-core/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/fp-core)](https://www.npmjs.com/package/fp-core)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://www.typescriptlang.org/)
 [![Bundle Size](https://img.shields.io/bundlephobia/minzip/fp-core)](https://bundlephobia.com/package/fp-core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
@@ -15,14 +14,14 @@ It gives you a small set of well-defined primitives — `pipe`, `Result`, `Optio
 full suite of curried array, object, string, and async utilities — all with precise types
 at every step and zero runtime dependencies.
 
-**What you get:**
+---
 
-- **`pipe(value, fn1, fn2, ...)`** — value-first composition with per-step type inference, up to 10 steps
-- **`Result<T, E>`** — represent success or failure as a value; no `try/catch`, no thrown errors
-- **`Option<T>`** — represent presence or absence explicitly; no accidental `null`/`undefined`
-- **Async utilities** — `pipeAsync`, `retry`, `mapConcurrent`, `mapConcurrentResult`, and more
-- **Array, Object, String, Predicates** — curried, data-last, designed to compose inside `pipe`
-- **Tree-shakeable** — import only what you use; subpath exports for fine-grained bundling
+## Why fp-core?
+
+- **vs fp-ts** — same `Result`/`Option`/`pipe` primitives without HKT encoding or category-theory prerequisites. No `Functor`, `Monad`, or `Applicative` in your mental model — just named functions that compose.
+- **vs Ramda** — value-first `pipe(value, f, g)` instead of `pipe(f, g)(value)`. TypeScript infers every intermediate type without losing precision across steps.
+- **vs neverthrow** — `Result` + `Option` + `pipe` + async utilities + array/object/string helpers in one tree-shakeable package with no dependencies.
+- **vs lodash/fp** — TypeScript-native from the ground up (no `any` leakage from overloads), with `Result` and `Option` built in to replace try/catch and null-check patterns structurally.
 
 ---
 
@@ -78,225 +77,16 @@ pipe(
 
 ---
 
-## API Reference
+## What's included
 
-### `pipe(value, ...fns)` — left-to-right composition
-
-Pipes a value through up to 10 functions. **Every intermediate type is inferred.**
-
-```typescript
-import { pipe } from 'fp-core';
-
-const result = pipe(
-  [1, 2, 3, 4, 5],
-  arr => arr.filter(n => n % 2 === 0), // number[] → number[]
-  arr => arr.map(n => n * 10),          // number[] → number[]
-  arr => arr.reduce((a, b) => a + b, 0), // number[] → number
-  n => `Total: ${n}`,                    // number → string
-);
-// result: 'Total: 60'
-```
-
----
-
-### `Result<T, E>` — errors as values
-
-```typescript
-import { Ok, Err, mapResult, flatMap, match, tryCatch, fromPromise } from 'fp-core';
-
-type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
-
-// Construct
-Ok(42)           // Result<number, never>
-Err('not found') // Result<never, string>
-
-// Transform
-mapResult(n => n * 2)(Ok(5))    // Ok(10)
-mapResult(n => n * 2)(Err('x')) // Err('x') — passes through
-
-// Chain
-const safeSqrt = (n: number) => n >= 0 ? Ok(Math.sqrt(n)) : Err('negative');
-flatMap(safeSqrt)(Ok(16))  // Ok(4)
-flatMap(safeSqrt)(Ok(-1))  // Err('negative')
-
-// Pattern match
-match(
-  value => `success: ${value}`,
-  error => `error: ${error}`,
-)(Ok(42)); // 'success: 42'
-
-// Wrap throwing functions
-const safeParse = tryCatch(JSON.parse);
-safeParse('{"a":1}') // Ok({ a: 1 })
-safeParse('bad')     // Err(SyntaxError)
-
-// Wrap Promises
-const result = await fromPromise(fetch('/api/users'));
-// Ok(Response) | Err(Error)
-```
-
----
-
-### `Option<T>` — explicit nullability
-
-```typescript
-import { Some, None, fromNullable, mapOption, flatMapOption, matchOption } from 'fp-core';
-
-type Option<T> = { _tag: 'Some'; value: T } | { _tag: 'None' };
-
-// Construct
-Some(42)         // Option<number>
-None             // Option<never>
-fromNullable(null)      // None
-fromNullable('hello')   // Some('hello')
-
-// Transform
-mapOption(n => n * 2)(Some(5)) // Some(10)
-mapOption(n => n * 2)(None)    // None
-
-// Chain
-const safeSqrt = (n: number): Option<number> =>
-  n >= 0 ? Some(Math.sqrt(n)) : None;
-
-flatMapOption(safeSqrt)(Some(16)) // Some(4)
-flatMapOption(safeSqrt)(Some(-1)) // None
-
-// Pattern match
-matchOption(
-  value => `found: ${value}`,
-  () => 'not found',
-)(Some(42)); // 'found: 42'
-
-// Interop with Result
-import { optionToResult, resultToOption } from 'fp-core';
-optionToResult(() => 'not found')(Some(42)) // Ok(42)
-optionToResult(() => 'not found')(None)     // Err('not found')
-```
-
----
-
-### `compose(...fns)` — right-to-left
-
-```typescript
-import { compose } from 'fp-core';
-
-const process = compose(
-  (n: number) => `Result: ${n}`, // applied last
-  (arr: number[]) => arr.reduce((a, b) => a + b, 0),
-  (s: string) => s.split(',').map(Number), // applied first
-);
-
-process('1,2,3,4,5'); // 'Result: 15'
-```
-
----
-
-### Async — `pipeAsync`, `retry`, `mapConcurrent`
-
-```typescript
-import { pipeAsync, retry, mapConcurrent, tryCatchAsync } from 'fp-core';
-
-// Async pipeline
-const processUser = pipeAsync(
-  fetchUser,       // (id: string) => Promise<User>
-  enrichWithRoles, // (user: User) => Promise<UserWithRoles>
-  formatForClient, // (user: UserWithRoles) => Promise<ClientUser>
-);
-await processUser('user-123');
-
-// Retry with exponential backoff — returns Result, never throws
-const result = await retry(3, 1000)(fetchUnstableApi);
-if (!result.ok) console.error(result.error.message);
-
-// Parallel with concurrency limit
-const users = await mapConcurrent(5, fetchUser)(['1', '2', ..., '100']);
-// processes 5 at a time
-
-// Safe async — errors captured in Result
-const safeUpload = tryCatchAsync(uploadFile);
-const result = await safeUpload(blob); // Result<UploadResult, Error>
-```
-
----
-
-### Array utilities
-
-All array functions are **curried** and **data-last** — designed for `pipe`.
-
-```typescript
-import { map, filter, reduce, groupBy, partition, chunk, sortBy } from 'fp-core';
-
-pipe(
-  [1, 2, 3, 4, 5, 6],
-  filter(n => n % 2 === 0),      // [2, 4, 6]
-  map(n => n * 10),               // [20, 40, 60]
-  reduce((acc, n) => acc + n, 0), // 120
-);
-
-// groupBy
-groupBy((u: User) => u.role)(users);
-// { admin: [User, ...], viewer: [User, ...] }
-
-// partition
-const [evens, odds] = partition((n: number) => n % 2 === 0)([1, 2, 3, 4]);
-
-// chunk
-chunk(3)([1, 2, 3, 4, 5, 6, 7]); // [[1,2,3],[4,5,6],[7]]
-```
-
----
-
-### Object utilities
-
-```typescript
-import { pick, omit, merge, deepMerge, mapValues, setPath, defaults } from 'fp-core';
-
-const user = { id: 1, name: 'Alice', password: 'secret', age: 30 };
-
-pick(['id', 'name'])(user);    // { id: 1, name: 'Alice' }
-omit(['password'])(user);       // { id: 1, name: 'Alice', age: 30 }
-
-// Immutable nested update
-const config = { db: { host: 'localhost', port: 5432 } };
-setPath(['db', 'port'], 5433)(config);
-// { db: { host: 'localhost', port: 5433 } } — original unchanged
-
-// Fill missing keys from a base object
-defaults({ timeout: 3000, retries: 3 })({ timeout: 5000 });
-// { timeout: 5000, retries: 3 }
-```
-
----
-
-### Predicates
-
-All predicates are **composable** with `and`, `or`, `not`.
-
-```typescript
-import { and, or, not, isString, isNumber, between } from 'fp-core';
-
-const isValidAge = and(isNumber, between(0, 150));
-isValidAge(25);  // true
-isValidAge(-1);  // false
-isValidAge('x'); // false
-
-const isAdminOrOwner = or(isAdmin, isOwner);
-```
-
----
-
-### String utilities
-
-```typescript
-import { camelCase, kebabCase, truncate, template } from 'fp-core';
-
-camelCase('hello world')     // 'helloWorld'
-kebabCase('helloWorld')      // 'hello-world'
-truncate(10)('Hello, World!') // 'Hello, ...'
-
-template({ name: 'Alice', role: 'admin' })('{{name}} is {{role}}')
-// 'Alice is admin'
-```
+- **`composition`** — `pipe`, `compose`, `flow`, `curry`, `memoize`, `tap`, `identity`, `constant`
+- **`result`** — `Ok`, `Err`, `mapResult`, `flatMap`, `match`, `tryCatch`, `fromPromise`, `collectErrors`
+- **`option`** — `Some`, `None`, `fromNullable`, `mapOption`, `flatMapOption`, `matchOption`, `unwrapOptionOr`
+- **`async`** — `pipeAsync`, `retry`, `timeout`, `debounce`, `mapConcurrent`, `mapConcurrentResult`, `tryCatchAsync`
+- **`array`** — `map`, `filter`, `reduce`, `groupBy`, `partition`, `chunk`, `sortBy`, `flatten`, `unique`
+- **`object`** — `pick`, `omit`, `merge`, `deepMerge`, `mapValues`, `setPath`, `getPath`, `defaults`
+- **`string`** — `camelCase`, `kebabCase`, `snakeCase`, `truncate`, `template`, `capitalize`
+- **`predicates`** — `and`, `or`, `not`, `isString`, `isNumber`, `isNil`, `between`
 
 ---
 
@@ -364,23 +154,9 @@ const validate = (form: SignupForm) =>
 
 ---
 
-## Tree-shaking
-
-fp-core is fully tree-shakeable. Each module is independently importable:
-
-```typescript
-// Only ships what you import
-import { pipe, tap } from 'fp-core';
-import { Ok, Err, mapResult } from 'fp-core';
-import { Some, None, fromNullable } from 'fp-core';
-import { pipeAsync, retry } from 'fp-core';
-```
-
----
-
 ## Subpath Imports
 
-Import only the module you need for better IDE support and explicit dependency tracking:
+fp-core is fully tree-shakeable. Import the root `'fp-core'` for most use cases, or use subpath imports for explicit dependency tracking:
 
 ```typescript
 import { Ok, Err, flatMap, mapResult } from 'fp-core/result';
@@ -393,93 +169,13 @@ import { camelCase, truncate, template } from 'fp-core/string';
 import { and, or, not, isString } from 'fp-core/predicates';
 ```
 
-The root import `'fp-core'` continues to export everything and remains the default for most use cases.
-
 ---
 
-## Migration Guide
+## Docs
 
-### Coming from Ramda
-
-| Ramda | fp-core |
-|-------|---------|
-| `R.pipe(f, g)(x)` | `pipe(x, f, g)` |
-| `R.compose(g, f)(x)` | `compose(g, f)(x)` |
-| `R.map(fn, list)` | `map(fn)(list)` |
-| `R.filter(pred, list)` | `filter(pred)(list)` |
-| `R.reduce(fn, init, list)` | `reduce(fn, init)(list)` |
-| `R.groupBy(fn, list)` | `groupBy(fn)(list)` |
-| `R.sortBy(fn, list)` | `sortBy(fn)(list)` |
-| `R.pick(['a','b'], obj)` | `pick(['a','b'])(obj)` |
-| `R.omit(['a'], obj)` | `omit(['a'])(obj)` |
-| `R.mergeRight(a, b)` | `merge(a)(b)` |
-| `R.either(f, g)` | `or(f, g)` — predicates module |
-| `R.both(f, g)` | `and(f, g)` — predicates module |
-| `R.complement(f)` | `not(f)` |
-| `R.memoize(f)` | `memoize(f)` |
-| `R.tap(fn)(x)` | `tap(fn)(x)` |
-| `R.curry(f)` | `curry(f)` |
-| `R.identity` | `identity` |
-| `R.always(x)` | `constant(x)` |
-
-Key differences:
-- **Value-first pipe**: `pipe(value, f, g)` instead of `pipe(f, g)(value)`. TypeScript infers every step without losing types.
-- **No `Maybe`/`Either`**: fp-core uses `Option<T>` and `Result<T, E>` with explicit constructors.
-- **No lens/transducer**: fp-core is intentionally limited to everyday utilities.
-
-### Coming from fp-ts
-
-| fp-ts | fp-core |
-|-------|---------|
-| `pipe(x, TE.map(f))` | `pipe(x, mapResult(f))` |
-| `E.right(x)` / `E.left(e)` | `Ok(x)` / `Err(e)` |
-| `E.map(f)(either)` | `mapResult(f)(result)` |
-| `E.chain(f)(either)` | `flatMap(f)(result)` |
-| `E.fold(onLeft, onRight)` | `match(onRight, onLeft)` |
-| `O.some(x)` / `O.none` | `Some(x)` / `None` |
-| `O.map(f)(option)` | `mapOption(f)(option)` |
-| `O.chain(f)(option)` | `flatMapOption(f)(option)` |
-| `O.fold(onNone, onSome)` | `matchOption(onSome, onNone)` |
-| `O.fromNullable(x)` | `fromNullable(x)` |
-| `TE.tryCatch(f, toError)` | `tryCatchAsync(f)` |
-| `T.sequenceArray(tasks)` | `sequence(tasks)` |
-| `A.map(f)(arr)` | `map(f)(arr)` |
-| `A.filter(pred)(arr)` | `filter(pred)(arr)` |
-| `flow(f, g)` | `flow(f, g)` or `pipe(x, f, g)` |
-
-Key differences:
-- **No HKT encoding**: fp-core does not use higher-kinded type emulation. The API is simpler but less polymorphic.
-- **No type class hierarchy**: there is no `Functor`, `Monad`, or `Applicative` abstraction — each type has its own named functions.
-- **`match` argument order**: fp-core uses `match(onOk, onErr)` (success first), while fp-ts uses `fold(onLeft, onRight)` (failure first).
-
-### Coming from lodash/fp
-
-| lodash/fp | fp-core |
-|-----------|---------|
-| `_.map(fn)(arr)` | `map(fn)(arr)` |
-| `_.filter(pred)(arr)` | `filter(pred)(arr)` |
-| `_.reduce(fn)(init)(arr)` | `reduce(fn, init)(arr)` |
-| `_.groupBy(fn)(arr)` | `groupBy(fn)(arr)` |
-| `_.sortBy(fn)(arr)` | `sortBy(fn)(arr)` |
-| `_.chunk(n)(arr)` | `chunk(n)(arr)` |
-| `_.flatten(arr)` | `flatten(arr)` |
-| `_.flattenDeep(arr)` | `flattenDeep(arr)` |
-| `_.uniq(arr)` | `unique(arr)` |
-| `_.pick(keys)(obj)` | `pick(keys)(obj)` |
-| `_.omit(keys)(obj)` | `omit(keys)(obj)` |
-| `_.merge(a)(b)` | `deepMerge(a)(b)` |
-| `_.camelCase(s)` | `camelCase(s)` |
-| `_.kebabCase(s)` | `kebabCase(s)` |
-| `_.truncate({length: n})(s)` | `truncate(n)(s)` |
-| `_.flow(f, g)` | `flow(f, g)` |
-| `_.memoize(f)` | `memoize(f)` |
-| `_.identity` | `identity` |
-| `_.constant(x)` | `constant(x)` |
-
-Key differences:
-- **TypeScript-native**: every function is typed precisely; no `any` leakage from lodash's overloads.
-- **No `_` namespace or chaining**: compose pipelines with `pipe` instead.
-- **Result/Option built-in**: fp-core replaces try/catch and null-check patterns structurally.
+- [API Reference](./docs/API.md) — full function signatures and examples
+- [Recipes](./docs/RECIPES.md) — 10 real-world usage patterns
+- [Migration Guide](./docs/MIGRATION.md) — coming from Ramda, fp-ts, or lodash/fp
 
 ---
 

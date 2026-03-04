@@ -1,7 +1,7 @@
 {
   "name": "fp-core",
   "version": "0.1.0",
-  "description": "Functional programming primitives for TypeScript — Result, Option, pipe, compose, async utilities. Zero dependencies.",
+  "description": "Functional programming primitives for TypeScript — every type inferred, zero dependencies.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -74,7 +74,12 @@
     "curry",
     "typescript",
     "monad",
-    "zero-dependency"
+    "zero-dependency",
+    "ramda",
+    "fp-ts",
+    "lodash",
+    "immutable",
+    "tree-shakeable"
   ],
   "author": "roxdavirox",
   "license": "MIT",
