@@ -98,7 +98,7 @@ export const replaceAll =
  * capitalize('hello world'); // 'Hello world'
  */
 export const capitalize = (str: string): string =>
-  str.length === 0 ? str : str[0].toUpperCase() + str.slice(1).toLowerCase();
+  str.length === 0 ? str : str[0]!.toUpperCase() + str.slice(1).toLowerCase();
 
 /**
  * Converts a string to camelCase.
@@ -118,7 +118,7 @@ export const camelCase = (str: string): string =>
  */
 export const pascalCase = (str: string): string => {
   const camel = camelCase(str);
-  return camel.length === 0 ? camel : camel[0].toUpperCase() + camel.slice(1);
+  return camel.length === 0 ? camel : camel[0]!.toUpperCase() + camel.slice(1);
 };
 
 /**
@@ -157,7 +157,7 @@ export const titleCase = (str: string): string =>
   str
     .toLowerCase()
     .split(' ')
-    .map(word => (word.length > 0 ? word[0].toUpperCase() + word.slice(1) : word))
+    .map(word => (word.length > 0 ? word[0]!.toUpperCase() + word.slice(1) : word))
     .join(' ');
 
 /**
@@ -285,7 +285,7 @@ export const dedent = (str: string): string => {
   const minIndent = Math.min(
     ...nonEmptyLines.map(line => {
       const match = line.match(/^(\s*)/);
-      return match ? match[1].length : 0;
+      return match ? match[1]!.length : 0;
     })
   );
 

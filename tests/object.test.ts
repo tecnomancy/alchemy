@@ -333,7 +333,7 @@ describe('deepClone', () => {
   it('circular reference is reproduced', () => {
     const obj: Record<string, unknown> = { x: 1 };
     obj['self'] = obj;
-    const copy = deepClone(obj) as Record<string, unknown>;
+    const copy = deepClone(obj);
     expect(copy['self']).toBe(copy);
     expect(copy).not.toBe(obj);
   });

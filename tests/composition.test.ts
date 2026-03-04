@@ -38,7 +38,7 @@ describe('pipe — heterogeneous type inference', () => {
       [1, 2, 3, 4, 5],
       arr => arr.filter((n: number) => n % 2 === 0),
       arr => arr.map((n: number) => n * 10),
-      arr => (arr as number[]).reduce((a, b) => a + b, 0),
+      arr => arr.reduce((a: number, b: number) => a + b, 0),
       n => n > 50,
       b => b ? 'yes' : 'no',
     );

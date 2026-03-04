@@ -17,7 +17,6 @@
  *
  * await pipeAsync(fetchUser, getEmail, sendEmail)('user-123');
  */
-/* eslint-disable no-redeclare */
 export function pipeAsync<A, B>(fn1: (a: A) => Promise<B>): (a: A) => Promise<B>;
 export function pipeAsync<A, B, C>(
   fn1: (a: A) => Promise<B>,

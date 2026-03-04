@@ -243,7 +243,7 @@ export const zip = <T, U>(arr1: T[], arr2: U[]): Array<[T, U]> => {
   const length = Math.min(arr1.length, arr2.length);
   const result: Array<[T, U]> = [];
   for (let i = 0; i < length; i++) {
-    result.push([arr1[i], arr2[i]]);
+    result.push([arr1[i]!, arr2[i]!]);
   }
   return result;
 };
@@ -311,7 +311,7 @@ export const hasItems = <T>(arr: T[]): boolean => Array.isArray(arr) && arr.leng
  * head([]);        // None
  */
 export const head = <T>(arr: T[]): Option<T> =>
-  arr.length > 0 ? Some(arr[0]) : None;
+  arr.length > 0 ? Some(arr[0]!) : None;
 
 /**
  * Returns all elements except the first, or None if array is empty.
@@ -330,7 +330,7 @@ export const tail = <T>(arr: T[]): Option<T[]> =>
  * last([]);        // None
  */
 export const last = <T>(arr: T[]): Option<T> =>
-  arr.length > 0 ? Some(arr[arr.length - 1]) : None;
+  arr.length > 0 ? Some(arr[arr.length - 1]!) : None;
 
 /**
  * Returns all elements except the last, or None if array is empty.
@@ -354,5 +354,5 @@ export const nth =
   (n: number) =>
   <T>(arr: T[]): Option<T> => {
     const idx = n < 0 ? arr.length + n : n;
-    return idx >= 0 && idx < arr.length ? Some(arr[idx]) : None;
+    return idx >= 0 && idx < arr.length ? Some(arr[idx]!) : None;
   };

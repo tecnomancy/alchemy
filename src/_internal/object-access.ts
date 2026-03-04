@@ -94,7 +94,7 @@ export const setPath =
   (obj: T): T => {
     if (path.length === 0) return obj;
 
-    const [head, ...tail] = path;
+    const [head, ...tail] = path as [string, ...string[]];
     const currentValue = (obj as Record<string, unknown>)[head];
 
     if (tail.length === 0) {
@@ -176,7 +176,7 @@ export const deletePath =
   (path: string[]) =>
   <T extends object>(obj: T): T => {
     if (path.length === 0) return obj;
-    const [head, ...tail] = path;
+    const [head, ...tail] = path as [string, ...string[]];
     if (tail.length === 0) {
       const { [head]: _removed, ...rest } = obj as Record<string, unknown>;
       return rest as T;
@@ -185,7 +185,7 @@ export const deletePath =
     if (!isObject(current)) return obj;
     return {
       ...obj,
-      [head]: deletePath(tail)(current as object),
+      [head]: deletePath(tail)(current),
     } as T;
   };
 
@@ -330,8 +330,8 @@ const deepEq = (a: unknown, b: unknown, seen: Map<unknown, unknown>): boolean =>
     return true;
   }
 
-  const keysA = Object.keys(a as object);
-  if (keysA.length !== Object.keys(b as object).length) return false;
+  const keysA = Object.keys(a);
+  if (keysA.length !== Object.keys(b).length) return false;
   for (const key of keysA) {
     if (!Object.prototype.hasOwnProperty.call(b, key)) return false;
     if (!deepEq(
@@ -412,7 +412,7 @@ const deepCopy = (value: unknown, seen: Map<unknown, unknown>): unknown => {
 
   const copy = Object.create(Object.getPrototypeOf(value) as object) as Record<string, unknown>;
   seen.set(value, copy);
-  for (const key of Object.keys(value as object)) {
+  for (const key of Object.keys(value)) {
     copy[key] = deepCopy((value as Record<string, unknown>)[key], seen);
   }
   return copy;
