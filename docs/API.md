@@ -6,11 +6,11 @@ Complete reference for all exported functions, organized by module.
 
 ```typescript
 // Root barrel — everything
-import { pipe, Ok, Err, Some, None } from 'fp-core';
+import { pipe, Ok, Err, Some, None } from '@roxdavirox/fp-core';
 
 // Subpath — one module
-import { Ok, Err, flatMap } from 'fp-core/result';
-import { pipe, compose } from 'fp-core/composition';
+import { Ok, Err, flatMap } from '@roxdavirox/fp-core/result';
+import { pipe, compose } from '@roxdavirox/fp-core/composition';
 ```
 
 ---
@@ -30,7 +30,7 @@ import { pipe, compose } from 'fp-core/composition';
 
 ## Result\<T, E\>
 
-`import { ... } from 'fp-core/result'`
+`import { ... } from '@roxdavirox/fp-core/result'`
 
 Represents a value that is either a success (`Ok`) or a failure (`Err`).
 Use `Result` instead of throwing exceptions for expected failure paths.
@@ -563,7 +563,7 @@ fromNullableResult('not found')(undefined); // Err('not found')
 
 ## Option\<T\>
 
-`import { ... } from 'fp-core/option'`
+`import { ... } from '@roxdavirox/fp-core/option'`
 
 Represents a value that may or may not be present. Use `Option` to eliminate `null`/`undefined` from your domain types.
 
@@ -856,7 +856,7 @@ resultToOption(Err('oops')); // None
 
 ## Composition
 
-`import { ... } from 'fp-core/composition'`
+`import { ... } from '@roxdavirox/fp-core/composition'`
 
 ### `pipe(value, ...fns)`
 
@@ -1106,7 +1106,7 @@ isOdd(3); // true
 
 ## Async
 
-`import { ... } from 'fp-core/async'`
+`import { ... } from '@roxdavirox/fp-core/async'`
 
 ### `pipeAsync(...fns)(value)`
 
@@ -1343,7 +1343,7 @@ await parallel([
 
 **Example:**
 ```typescript
-import { mapConcurrentResult, mapAsyncResult, collectErrors } from 'fp-core';
+import { mapConcurrentResult, mapAsyncResult, collectErrors } from '@roxdavirox/fp-core';
 
 // mapAsyncResult — sequential, collects all errors
 const results = await mapAsyncResult(
@@ -1362,7 +1362,7 @@ const results2 = await mapConcurrentResult(
 
 ## Array
 
-`import { ... } from 'fp-core/array'`
+`import { ... } from '@roxdavirox/fp-core/array'`
 
 All array functions are curried and data-last — designed to compose inside `pipe`.
 
@@ -1414,7 +1414,7 @@ All array functions are curried and data-last — designed to compose inside `pi
 
 **Example:**
 ```typescript
-import { head, tail, last, nth } from 'fp-core';
+import { head, tail, last, nth } from '@roxdavirox/fp-core';
 
 head([1, 2, 3]); // Some(1)
 head([]);        // None
@@ -1443,7 +1443,7 @@ const [evens, odds] = partition(n => n % 2 === 0)([1, 2, 3, 4]);
 
 ## Object
 
-`import { ... } from 'fp-core/object'`
+`import { ... } from '@roxdavirox/fp-core/object'`
 
 ### Picking & Merging
 
@@ -1523,7 +1523,7 @@ getPath(['db', 'port'])(config); // 5432
 
 ## String
 
-`import { ... } from 'fp-core/string'`
+`import { ... } from '@roxdavirox/fp-core/string'`
 
 ### Case Conversion
 
@@ -1621,7 +1621,7 @@ format('Hello %s, you are %d years old')('Alice', 30);
 
 ## Predicates
 
-`import { ... } from 'fp-core/predicates'`
+`import { ... } from '@roxdavirox/fp-core/predicates'`
 
 ### Logical Combinators
 

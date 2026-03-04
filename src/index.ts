@@ -4,7 +4,7 @@
  * Zero-dependency. Tree-shakeable. TypeScript-native.
  * Every function is pure, curried, and data-last.
  *
- * @module fp-core
+ * @module @roxdavirox/fp-core
  */
 
 // Result<T, E> — explicit error handling, no exceptions
