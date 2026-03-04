@@ -10,21 +10,19 @@
 
 ---
 
-## Why fp-core?
+fp-core is a TypeScript-native library for writing predictable, composable code.
+It gives you a small set of well-defined primitives — `pipe`, `Result`, `Option`, and a
+full suite of curried array, object, string, and async utilities — all with precise types
+at every step and zero runtime dependencies.
 
-| | fp-core | Ramda | fp-ts |
-|---|---|---|---|
-| TypeScript-native | yes | partial (bolted-on types) | yes |
-| `pipe()` with per-step inference | yes | no (loses types past ~5 steps) | yes |
-| `Result<T, E>` built-in | yes | no | yes (Either) |
-| `Option<T>` built-in | yes | no | yes (Option) |
-| Async-aware (`pipeAsync`, `retry`) | yes | no | partial (TaskEither) |
-| Zero dependencies | yes | yes | yes |
-| Learning curve | Low | Medium | High |
-| Bundle (minzipped) | ~3 kb | ~14 kb | ~25 kb |
-| Category Theory jargon | no | partial | yes (unavoidable) |
+**What you get:**
 
-**fp-core is not a Haskell port. It's TypeScript-native FP for engineers who want to ship.**
+- **`pipe(value, fn1, fn2, ...)`** — value-first composition with per-step type inference, up to 10 steps
+- **`Result<T, E>`** — represent success or failure as a value; no `try/catch`, no thrown errors
+- **`Option<T>`** — represent presence or absence explicitly; no accidental `null`/`undefined`
+- **Async utilities** — `pipeAsync`, `retry`, `mapConcurrent`, `mapConcurrentResult`, and more
+- **Array, Object, String, Predicates** — curried, data-last, designed to compose inside `pipe`
+- **Tree-shakeable** — import only what you use; subpath exports for fine-grained bundling
 
 ---
 
@@ -98,9 +96,6 @@ const result = pipe(
 );
 // result: 'Total: 60'
 ```
-
-> Ramda's `pipe` works point-free but loses TypeScript inference past ~5 steps.
-> `fp-core/pipe` is value-first and infers up to 10 steps with full precision.
 
 ---
 
@@ -254,7 +249,7 @@ chunk(3)([1, 2, 3, 4, 5, 6, 7]); // [[1,2,3],[4,5,6],[7]]
 ### Object utilities
 
 ```typescript
-import { pick, omit, merge, deepMerge, mapValues, setPath } from 'fp-core';
+import { pick, omit, merge, deepMerge, mapValues, setPath, defaults } from 'fp-core';
 
 const user = { id: 1, name: 'Alice', password: 'secret', age: 30 };
 
@@ -265,6 +260,10 @@ omit(['password'])(user);       // { id: 1, name: 'Alice', age: 30 }
 const config = { db: { host: 'localhost', port: 5432 } };
 setPath(['db', 'port'], 5433)(config);
 // { db: { host: 'localhost', port: 5433 } } — original unchanged
+
+// Fill missing keys from a base object
+defaults({ timeout: 3000, retries: 3 })({ timeout: 5000 });
+// { timeout: 5000, retries: 3 }
 ```
 
 ---
