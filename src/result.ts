@@ -511,7 +511,12 @@ export const flatMapAsync =
 export type Validator<T, E = string> = (value: T) => Result<T, E>;
 
 /**
- * Combines multiple validators - all must pass
+ * Combines multiple validators — all must pass (fail-fast).
+ *
+ * @param validators - Array of validator functions. Checked in order; the first
+ *   failure short-circuits and its error is returned immediately.
+ * @returns `Ok(value)` when all validators pass; `Err(E)` from the first
+ *   failing validator.
  *
  * @example
  * const isPositive: Validator<number> = (x) =>
@@ -538,7 +543,12 @@ export const validateAll =
   };
 
 /**
- * Combines multiple validators - at least one must pass
+ * Combines multiple validators — at least one must pass.
+ *
+ * @param validators - Array of validator functions. Checked in order; the first
+ *   success short-circuits and `Ok(value)` is returned.
+ * @returns `Ok(value)` when any validator passes; `Err(E[])` collecting every
+ *   error when all validators fail (last error is the last validator's error).
  *
  * @example
  * const isZero: Validator<number> = (x) =>
@@ -550,7 +560,7 @@ export const validateAll =
  * const validate = validateAny([isZero, isPositive]);
  * validate(5); // Ok(5)
  * validate(0); // Ok(0)
- * validate(-1); // Err('Not positive')
+ * validate(-1); // Err(['Not zero', 'Not positive'])
  */
 export const validateAny =
   <T, E>(validators: Array<Validator<T, E>>) =>

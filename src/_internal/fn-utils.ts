@@ -109,6 +109,11 @@ export const tap =
 /**
  * Caches the results of a pure function keyed by its arguments.
  *
+ * @param fn - The function whose results should be cached. Should be pure (same args → same result).
+ * @param keyFn - Produces the cache key from the arguments (default: `JSON.stringify(args)`).
+ *   Use a custom `keyFn` when args contain non-serialisable values (e.g. objects by reference).
+ * @returns A memoized wrapper that returns cached results on repeated calls with equal keys.
+ *
  * @example
  * const slowFn = (n: number) => n * 2;
  * const fastFn = memoize(slowFn);

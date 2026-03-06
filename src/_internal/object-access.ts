@@ -84,6 +84,12 @@ export const getPath =
  * Returns a new object with the value at the given path replaced.
  * Does not mutate the original (curried, data-last).
  *
+ * @param path - Array of keys describing the nested location to write.
+ *   An empty path returns the object unchanged.
+ * @param value - The new value to set at the path. Intermediate objects are
+ *   created as `{}` if a segment is missing or non-object.
+ * @returns A structurally-shared copy of the input with the path updated.
+ *
  * @example
  * const user = { profile: { name: 'Alice' } };
  * setPath(['profile', 'name'], 'Bob')(user);

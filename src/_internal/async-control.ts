@@ -13,6 +13,11 @@ import { Ok, Err, type Result } from '../result.js';
  * Retries an async function with exponential backoff.
  * Returns `Result<T, Error>` — never throws.
  *
+ * @param maxAttempts - Number of times to attempt the function before giving up.
+ * @param delayMs - Base delay in milliseconds between attempts (default: 1000).
+ * @param backoff - Exponential multiplier applied to `delayMs` on each retry (default: 2).
+ * @returns `Ok(value)` on first success; `Err(lastError)` after all attempts fail.
+ *
  * @example
  * const result = await retry(3, 1000)(fetchData); // 3 attempts, 1s base delay
  * if (!result.ok) console.error(result.error.message);

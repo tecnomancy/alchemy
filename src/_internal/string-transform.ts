@@ -246,6 +246,11 @@ export const reverse = (str: string): string => Array.from(str).reverse().join('
 /**
  * Truncates a string to the given length, appending a suffix if cut.
  *
+ * @param maxLength - Maximum length of the returned string including the suffix.
+ * @param suffix - String appended when truncation occurs (default: `'...'`).
+ * @returns The original string if `str.length <= maxLength`, otherwise the
+ *   truncated string with the suffix appended.
+ *
  * @example
  * truncate(10)('hello world'); // 'hello w...'
  * truncate(10, '…')('hello world'); // 'hello wor…'

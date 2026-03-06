@@ -275,6 +275,9 @@ export const unzip = <T, U>(arr: Array<[T, U]>): [T[], U[]] => {
 /**
  * Splits an array into chunks of a given size (curried, data-last).
  *
+ * @param size - Number of elements per chunk. Must be ≥ 1; values ≤ 0 produce an empty array.
+ * @returns A new array of sub-arrays. The last chunk may be smaller than `size`.
+ *
  * @example
  * chunk(2)([1, 2, 3, 4, 5]); // [[1, 2], [3, 4], [5]]
  */
