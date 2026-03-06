@@ -88,6 +88,7 @@ export const debounceAsync =
     return (...args: T): Promise<R> => {
       if (timeoutId) {
         clearTimeout(timeoutId);
+        latestReject?.(new Error('debounced'));
       }
 
       return new Promise<R>((resolve, reject) => {
@@ -95,6 +96,7 @@ export const debounceAsync =
         latestReject = reject;
 
         timeoutId = setTimeout(async () => {
+          timeoutId = null;
           try {
             const result = await fn(...args);
             latestResolve?.(result);
@@ -126,21 +128,15 @@ export const throttleAsync =
     let lastExecution = 0;
     let pending: Promise<R> | null = null;
 
-    return async (...args: T): Promise<R> => {
+    return (...args: T): Promise<R> => {
       const now = Date.now();
-      const timeSinceLastExecution = now - lastExecution;
 
-      if (timeSinceLastExecution >= delayMs) {
+      if (now - lastExecution >= delayMs || pending === null) {
         lastExecution = now;
         pending = fn(...args);
-        return pending;
+        void pending.finally(() => { pending = null; });
       }
 
-      if (pending) {
-        return pending;
-      }
-
-      pending = fn(...args);
       return pending;
     };
   };
