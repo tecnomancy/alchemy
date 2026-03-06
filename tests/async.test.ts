@@ -163,13 +163,24 @@ describe('debounceAsync', () => {
     const inner = vi.fn(async (n: number) => n * 2);
     const debounced = debounceAsync<[number], number>(50)(inner as NumFn);
 
-    debounced(1);
-    debounced(2);
+    debounced(1).catch(() => {}); // superseded — rejects with 'debounced'
+    debounced(2).catch(() => {}); // superseded — rejects with 'debounced'
     const result = await debounced(3);
 
     expect(result).toBe(6);
     expect(inner).toHaveBeenCalledTimes(1);
     expect(inner).toHaveBeenCalledWith(3);
+  });
+
+  it('rejects superseded calls with a debounced error', async () => {
+    const inner = vi.fn(async (n: number) => n * 2);
+    const debounced = debounceAsync<[number], number>(50)(inner as NumFn);
+
+    const p1 = debounced(1);
+    p1.catch(() => {}); // attach handler before rejection fires to suppress unhandled-rejection warning
+    await debounced(2); // supersedes p1 — p1 rejects synchronously with Error('debounced')
+
+    await expect(p1).rejects.toThrow('debounced');
   });
 
   it('calls the function again after the delay has elapsed', async () => {
@@ -230,6 +241,19 @@ describe('throttleAsync', () => {
     const result = await throttled(2);
 
     expect(result).toBe(4);
+    expect(inner).toHaveBeenCalledTimes(2);
+  });
+
+  it('executes fresh when promise settled and window expired', async () => {
+    const inner = vi.fn(async (n: number) => n * 2);
+    const throttled = throttleAsync<[number], number>(20)(inner as NumFn);
+
+    const r1 = await throttled(3); // executes, pending set then cleared after settle
+    await sleep(30);               // window expires
+    const r2 = await throttled(5); // new window — must execute fresh
+
+    expect(r1).toBe(6);
+    expect(r2).toBe(10);
     expect(inner).toHaveBeenCalledTimes(2);
   });
 });
