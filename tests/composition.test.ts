@@ -87,6 +87,23 @@ describe('curry', () => {
     const add3 = curry((a: number, b: number, c: number) => a + b + c);
     expect(add3(1)(2)(3)).toBe(6);
   });
+
+  it('curries a 4-argument function', () => {
+    const sum4 = curry((a: number, b: number, c: number, d: number) => a + b + c + d);
+    expect(sum4(1)(2)(3)(4)).toBe(10);
+  });
+
+  it('preserves return type for binary function — result is number', () => {
+    const add = curry((a: number, b: number) => a + b);
+    const result: number = add(1)(2);
+    expect(result).toBe(3);
+  });
+
+  it('preserves return type for ternary function — result is string', () => {
+    const concat = curry((a: string, b: string, c: string) => a + b + c);
+    const result: string = concat('a')('b')('c');
+    expect(result).toBe('abc');
+  });
 });
 
 describe('identity', () => {

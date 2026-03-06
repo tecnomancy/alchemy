@@ -43,23 +43,38 @@ export const prop =
 
 /**
  * Transforms a multi-argument function into a chain of single-argument functions.
+ * Typed overloads cover 1–4 arguments with full inference; 5+ arguments fall back
+ * to `unknown` types.
  *
  * @example
- * const add = (a: number, b: number, c: number) => a + b + c;
+ * const add = (a: number, b: number) => a + b;
  * const curriedAdd = curry(add);
- * curriedAdd(1)(2)(3); // 6
- * curriedAdd(1, 2)(3); // 6
+ * curriedAdd(1)(2); // 3 — type: number
+ *
+ * const add3 = (a: number, b: number, c: number) => a + b + c;
+ * curry(add3)(1)(2)(3); // 6 — type: number
  */
-export const curry = <T extends unknown[], R>(
+export function curry<A, R>(fn: (a: A) => R): (a: A) => R;
+export function curry<A, B, R>(fn: (a: A, b: B) => R): (a: A) => (b: B) => R;
+export function curry<A, B, C, R>(
+  fn: (a: A, b: B, c: C) => R
+): (a: A) => (b: B) => (c: C) => R;
+export function curry<A, B, C, D, R>(
+  fn: (a: A, b: B, c: C, d: D) => R
+): (a: A) => (b: B) => (c: C) => (d: D) => R;
+export function curry<T extends unknown[], R>(
   fn: (...args: T) => R
-): ((...args: readonly unknown[]) => unknown) => {
+): (...args: readonly unknown[]) => unknown;
+export function curry<T extends unknown[], R>(
+  fn: (...args: T) => R
+): unknown {
   return function curried(...args: unknown[]): unknown {
     if (args.length >= fn.length) {
       return fn(...(args as T));
     }
-    return (...nextArgs: unknown[]) => curried(...args, ...nextArgs);
+    return (...nextArgs: unknown[]) => (curried as (...a: unknown[]) => unknown)(...args, ...nextArgs);
   };
-};
+}
 
 /**
  * Applies a function with some arguments pre-filled.
