@@ -48,6 +48,48 @@ export function pipeAsync<A, B, C, D, E, F, G>(
   fn5: (e: E) => Promise<F>,
   fn6: (f: F) => Promise<G>
 ): (a: A) => Promise<G>;
+export function pipeAsync<A, B, C, D, E, F, G, H>(
+  fn1: (a: A) => Promise<B>,
+  fn2: (b: B) => Promise<C>,
+  fn3: (c: C) => Promise<D>,
+  fn4: (d: D) => Promise<E>,
+  fn5: (e: E) => Promise<F>,
+  fn6: (f: F) => Promise<G>,
+  fn7: (g: G) => Promise<H>
+): (a: A) => Promise<H>;
+export function pipeAsync<A, B, C, D, E, F, G, H, I>(
+  fn1: (a: A) => Promise<B>,
+  fn2: (b: B) => Promise<C>,
+  fn3: (c: C) => Promise<D>,
+  fn4: (d: D) => Promise<E>,
+  fn5: (e: E) => Promise<F>,
+  fn6: (f: F) => Promise<G>,
+  fn7: (g: G) => Promise<H>,
+  fn8: (h: H) => Promise<I>
+): (a: A) => Promise<I>;
+export function pipeAsync<A, B, C, D, E, F, G, H, I, J>(
+  fn1: (a: A) => Promise<B>,
+  fn2: (b: B) => Promise<C>,
+  fn3: (c: C) => Promise<D>,
+  fn4: (d: D) => Promise<E>,
+  fn5: (e: E) => Promise<F>,
+  fn6: (f: F) => Promise<G>,
+  fn7: (g: G) => Promise<H>,
+  fn8: (h: H) => Promise<I>,
+  fn9: (i: I) => Promise<J>
+): (a: A) => Promise<J>;
+export function pipeAsync<A, B, C, D, E, F, G, H, I, J, K>(
+  fn1: (a: A) => Promise<B>,
+  fn2: (b: B) => Promise<C>,
+  fn3: (c: C) => Promise<D>,
+  fn4: (d: D) => Promise<E>,
+  fn5: (e: E) => Promise<F>,
+  fn6: (f: F) => Promise<G>,
+  fn7: (g: G) => Promise<H>,
+  fn8: (h: H) => Promise<I>,
+  fn9: (i: I) => Promise<J>,
+  fn10: (j: J) => Promise<K>
+): (a: A) => Promise<K>;
 export function pipeAsync(
   ...fns: Array<(arg: unknown) => Promise<unknown>>
 ): (value: unknown) => Promise<unknown> {
