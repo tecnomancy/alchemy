@@ -4,9 +4,6 @@
  * @module result
  */
 
-import type { Option } from './option.js';
-import { Some, None } from './option.js';
-
 // ============================================================================
 // RESULT TYPE
 // ============================================================================
@@ -395,7 +392,7 @@ export const tryCatch =
   };
 
 // ============================================================================
-// OPTION INTEROP
+// BIMAP / MAPBOTH
 // ============================================================================
 
 /**
@@ -430,16 +427,6 @@ export const mapLeft = mapErr;
  */
 export const swap = <T, E>(result: Result<T, E>): Result<E, T> =>
   isOk(result) ? Err(result.value) : Ok(result.error);
-
-/**
- * Convert a Result to an Option, discarding the error on Err.
- *
- * @example
- * toOption(Ok(42));      // Some(42)
- * toOption(Err('oops')); // None
- */
-export const toOption = <T, E>(result: Result<T, E>): Option<T> =>
-  isOk(result) ? Some(result.value) : None;
 
 /**
  * Async version of tryCatch

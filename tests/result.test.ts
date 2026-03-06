@@ -12,11 +12,12 @@ import {
   validateAll, validateAny, validateCollect,
   mapResultAsync, flatMapAsync,
   tapResult, tapError, orElse, fromNullableResult,
-  bimap, mapLeft, swap, toOption,
+  bimap, mapLeft, swap,
   ap, liftA2, liftA3,
   type Result,
 } from '../src/result.js';
 import { Some, None } from '../src/option.js';
+import { toOption } from '../src/interop.js';
 
 describe('Result — constructors', () => {
   it('Ok creates a success', () => {

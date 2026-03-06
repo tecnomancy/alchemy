@@ -41,6 +41,10 @@
     "./composition": {
       "types": "./dist/composition.d.ts",
       "import": "./dist/composition.js"
+    },
+    "./interop": {
+      "types": "./dist/interop.d.ts",
+      "import": "./dist/interop.js"
     }
   },
   "sideEffects": false,

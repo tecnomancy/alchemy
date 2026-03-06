@@ -9,9 +9,9 @@ import {
   orElseOption,
   toNullable, toArray,
   zipOption, sequenceOption, compactOptions,
-  optionToResult, resultToOption,
 } from '../src/option.js';
 import { Ok, Err, isOk, isErr } from '../src/result.js';
+import { optionToResult, resultToOption } from '../src/interop.js';
 
 describe('Option — constructors', () => {
   it('Some wraps a value', () => {
