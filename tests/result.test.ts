@@ -9,7 +9,7 @@ import {
   combineAll, combineTwo, collectErrors,
   tryCatch, tryCatchAsync,
   fromPromise,
-  validateAll, validateAny,
+  validateAll, validateAny, validateCollect,
   mapResultAsync, flatMapAsync,
   tapResult, tapError, orElse, fromNullableResult,
   bimap, mapLeft, swap, toOption,
@@ -202,6 +202,22 @@ describe('Result — validation', () => {
 
   it('validateAny fails if all validators fail', () => {
     expect(isErr(validateAny([isPositive, isEven])(-3))).toBe(true);
+  });
+
+  it('validateCollect returns Ok when all pass', () => {
+    expect(isOk(validateCollect([isPositive, isEven])(4))).toBe(true);
+  });
+
+  it('validateCollect collects all errors without short-circuiting', () => {
+    const r = validateCollect([isPositive, isEven])(-3);
+    expect(isErr(r)).toBe(true);
+    if (!r.ok) expect(r.error).toEqual(['not positive', 'not even']);
+  });
+
+  it('validateCollect collects only failing validators', () => {
+    const r = validateCollect([isPositive, isEven])(3);
+    expect(isErr(r)).toBe(true);
+    if (!r.ok) expect(r.error).toEqual(['not even']);
   });
 });
 

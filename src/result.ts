@@ -577,3 +577,40 @@ export const validateAny =
 
     return Err(errors);
   };
+
+/**
+ * Runs all validators and collects every failure (error accumulation).
+ * Unlike `validateAll` (fail-fast), all validators are always executed so
+ * every error is reported at once — useful for form validation.
+ *
+ * @param validators - Array of validator functions. All are executed regardless
+ *   of earlier failures.
+ * @returns `Ok(value)` when all validators pass; `Err(E[])` containing every
+ *   error from every failing validator, in order.
+ *
+ * @example
+ * const isPositive: Validator<number> = (x) =>
+ *   x > 0 ? Ok(x) : Err('Must be positive');
+ *
+ * const isEven: Validator<number> = (x) =>
+ *   x % 2 === 0 ? Ok(x) : Err('Must be even');
+ *
+ * const validate = validateCollect([isPositive, isEven]);
+ * validate(4);  // Ok(4)
+ * validate(3);  // Err(['Must be even'])
+ * validate(-3); // Err(['Must be positive', 'Must be even'])
+ */
+export const validateCollect =
+  <T, E>(validators: Array<Validator<T, E>>) =>
+  (value: T): Result<T, E[]> => {
+    const errors: E[] = [];
+
+    for (const validator of validators) {
+      const result = validator(value);
+      if (isErr(result)) {
+        errors.push(result.error);
+      }
+    }
+
+    return errors.length === 0 ? Ok(value) : Err(errors);
+  };
