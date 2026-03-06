@@ -168,31 +168,3 @@ export const compactOptions = <T>(opts: Array<Option<T>>): T[] => {
   return result;
 };
 
-// ============================================================================
-// INTEROP WITH RESULT
-// ============================================================================
-
-import type { Result } from './result.js';
-import { Ok, Err } from './result.js';
-
-/**
- * Converts Option<T> to Result<T, E>.
- *
- * @example
- * optionToResult(() => 'not found')(Some(42))  // Ok(42)
- * optionToResult(() => 'not found')(None)       // Err('not found')
- */
-export const optionToResult =
-  <T, E>(onNone: () => E) =>
-  (opt: Option<T>): Result<T, E> =>
-    isSome(opt) ? Ok(opt.value) : Err(onNone());
-
-/**
- * Converts Result<T, E> to Option<T>, discarding the error.
- *
- * @example
- * resultToOption(Ok(42))         // Some(42)
- * resultToOption(Err('oops'))    // None
- */
-export const resultToOption = <T, E>(result: Result<T, E>): Option<T> =>
-  result.ok ? Some(result.value) : None;

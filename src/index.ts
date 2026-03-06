@@ -13,6 +13,9 @@ export * from './result.js';
 // Option<T> — explicit nullability, no null checks
 export * from './option.js';
 
+// Interop — toOption, optionToResult, resultToOption (bridges Result ↔ Option)
+export * from './interop.js';
+
 // pipe / compose / curry — type-safe composition (10+ steps inferred)
 export * from './composition.js';
 
