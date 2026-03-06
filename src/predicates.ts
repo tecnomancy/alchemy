@@ -104,7 +104,11 @@ export const or =
 export const xor =
   <T>(...predicates: Array<(value: T) => boolean>) =>
   (value: T): boolean => {
-    const trueCount = predicates.filter(p => p(value)).length;
+    let trueCount = 0;
+    for (const p of predicates) {
+      if (p(value)) trueCount += 1;
+      if (trueCount > 1) return false;
+    }
     return trueCount === 1;
   };
 

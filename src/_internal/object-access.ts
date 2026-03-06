@@ -288,10 +288,8 @@ export const clone = <T>(obj: T): T => {
 
   if (obj instanceof Object) {
     const clonedObj: Record<string, unknown> = {};
-    for (const key in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        clonedObj[key] = clone((obj as Record<string, unknown>)[key]);
-      }
+    for (const key of Object.keys(obj)) {
+      clonedObj[key] = clone((obj as Record<string, unknown>)[key]);
     }
     return clonedObj as T;
   }
@@ -462,12 +460,10 @@ export const deepClone = <T>(value: T): T => deepCopy(value, new Map()) as T;
 export const freeze = <T extends object>(obj: T): Readonly<T> => {
   Object.freeze(obj);
 
-  for (const key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      const value = obj[key];
-      if (isObject(value)) {
-        freeze(value);
-      }
+  for (const key of Object.keys(obj)) {
+    const value = obj[key as keyof T];
+    if (isObject(value)) {
+      freeze(value);
     }
   }
 
