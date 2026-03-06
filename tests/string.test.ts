@@ -31,12 +31,28 @@ describe('case transformations', () => {
     expect(pascalCase('hello world')).toBe('HelloWorld');
   });
 
-  it('snakeCase from camelCase', () => {
-    expect(snakeCase('helloWorld')).toBe('hello_world');
+  describe('snakeCase', () => {
+    it('from camelCase', () => expect(snakeCase('helloWorld')).toBe('hello_world'));
+    it('from PascalCase', () => expect(snakeCase('HelloWorld')).toBe('hello_world'));
+    it('from kebab-case', () => expect(snakeCase('hello-world')).toBe('hello_world'));
+    it('from space-separated', () => expect(snakeCase('hello world')).toBe('hello_world'));
+    it('from Title Case', () => expect(snakeCase('Hello World')).toBe('hello_world'));
+    it('from ALL_CAPS_SNAKE', () => expect(snakeCase('HELLO_WORLD')).toBe('hello_world'));
+    it('from uppercase acronym', () => expect(snakeCase('XMLParser')).toBe('xml_parser'));
+    it('from mixed delimiters', () => expect(snakeCase('hello-world_test')).toBe('hello_world_test'));
+    it('already snake_case is idempotent', () => expect(snakeCase('hello_world')).toBe('hello_world'));
   });
 
-  it('kebabCase from camelCase', () => {
-    expect(kebabCase('helloWorld')).toBe('hello-world');
+  describe('kebabCase', () => {
+    it('from camelCase', () => expect(kebabCase('helloWorld')).toBe('hello-world'));
+    it('from PascalCase', () => expect(kebabCase('HelloWorld')).toBe('hello-world'));
+    it('from snake_case', () => expect(kebabCase('hello_world')).toBe('hello-world'));
+    it('from space-separated', () => expect(kebabCase('hello world')).toBe('hello-world'));
+    it('from Title Case', () => expect(kebabCase('Hello World')).toBe('hello-world'));
+    it('from ALL_CAPS_SNAKE', () => expect(kebabCase('HELLO_WORLD')).toBe('hello-world'));
+    it('from uppercase acronym', () => expect(kebabCase('XMLParser')).toBe('xml-parser'));
+    it('from mixed delimiters', () => expect(kebabCase('hello_world-test')).toBe('hello-world-test'));
+    it('already kebab-case is idempotent', () => expect(kebabCase('hello-world')).toBe('hello-world'));
   });
 
   it('titleCase', () => {

@@ -122,30 +122,41 @@ export const pascalCase = (str: string): string => {
 };
 
 /**
+ * Splits a string into lowercase words.
+ * Handles camelCase, PascalCase, kebab-case, snake_case, Title Case,
+ * and any combination of these formats.
+ */
+const splitWords = (str: string): string[] =>
+  str
+    .replace(/([a-z])([A-Z])/g, '$1 $2')       // camelCase → "camel Case"
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2') // XMLParser → "XML Parser"
+    .split(/[\s_-]+/)
+    .map(w => w.toLowerCase())
+    .filter(Boolean);
+
+/**
  * Converts a string to snake_case.
+ * Accepts any common format: camelCase, PascalCase, kebab-case, space-separated.
  *
  * @example
- * snakeCase('helloWorld'); // 'hello_world'
+ * snakeCase('helloWorld');   // 'hello_world'
+ * snakeCase('hello-world');  // 'hello_world'
+ * snakeCase('Hello World');  // 'hello_world'
+ * snakeCase('XMLParser');    // 'xml_parser'
  */
-export const snakeCase = (str: string): string =>
-  str
-    .replace(/([A-Z])/g, '_$1')
-    .toLowerCase()
-    .replace(/^_/, '')
-    .replace(/\s+/g, '_');
+export const snakeCase = (str: string): string => splitWords(str).join('_');
 
 /**
  * Converts a string to kebab-case.
+ * Accepts any common format: camelCase, PascalCase, snake_case, space-separated.
  *
  * @example
- * kebabCase('helloWorld'); // 'hello-world'
+ * kebabCase('helloWorld');   // 'hello-world'
+ * kebabCase('hello_world');  // 'hello-world'
+ * kebabCase('Hello World');  // 'hello-world'
+ * kebabCase('XMLParser');    // 'xml-parser'
  */
-export const kebabCase = (str: string): string =>
-  str
-    .replace(/([A-Z])/g, '-$1')
-    .toLowerCase()
-    .replace(/^-/, '')
-    .replace(/\s+/g, '-');
+export const kebabCase = (str: string): string => splitWords(str).join('-');
 
 /**
  * Capitalizes the first letter of each word.
