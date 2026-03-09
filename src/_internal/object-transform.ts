@@ -78,6 +78,7 @@ export const deepMerge =
     const result: Record<string, unknown> = { ...(base as Record<string, unknown>) };
 
     for (const key in override) {
+      if (!Object.prototype.hasOwnProperty.call(override, key)) continue;
       const overrideValue = override[key];
       const baseValue = result[key];
 

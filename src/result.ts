@@ -376,7 +376,7 @@ export const fromPromise = async <T, E = Error>(promise: Promise<T>): Promise<Re
     const value = await promise;
     return Ok(value);
   } catch (error) {
-    return Err(error as E);
+    return Err((error instanceof Error ? error : new Error(String(error))) as unknown as E);
   }
 };
 
@@ -399,7 +399,7 @@ export const tryCatch =
     try {
       return Ok(fn(...args));
     } catch (error) {
-      return Err(error as E);
+      return Err((error instanceof Error ? error : new Error(String(error))) as unknown as E);
     }
   };
 
@@ -460,7 +460,7 @@ export const tryCatchAsync =
       const value = await fn(...args);
       return Ok(value);
     } catch (error) {
-      return Err(error as E);
+      return Err((error instanceof Error ? error : new Error(String(error))) as unknown as E);
     }
   };
 
