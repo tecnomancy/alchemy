@@ -9,6 +9,7 @@ import {
   orElseOption,
   toNullable, toArray,
   zipOption, sequenceOption, compactOptions,
+  filterOption, getOrElse, getOr,
 } from '../src/option.js';
 import { Ok, Err, isOk, isErr } from '../src/result.js';
 import { optionToResult, resultToOption } from '../src/interop.js';
@@ -174,5 +175,35 @@ describe('Option — interop with Result', () => {
 
   it('resultToOption converts Err to None', () => {
     expect(isNone(resultToOption(Err('oops')))).toBe(true);
+  });
+});
+
+describe('filterOption', () => {
+  it('keeps Some when predicate holds', () => {
+    expect(filterOption((n: number) => n > 0)(Some(42))).toEqual(Some(42));
+  });
+  it('converts Some to None when predicate fails', () => {
+    expect(isNone(filterOption((n: number) => n > 0)(Some(-1)))).toBe(true);
+  });
+  it('passes None through', () => {
+    expect(isNone(filterOption((n: number) => n > 0)(None))).toBe(true);
+  });
+});
+
+describe('getOrElse', () => {
+  it('extracts Some value', () => {
+    expect(getOrElse(() => 0)(Some(42))).toBe(42);
+  });
+  it('calls fallback on None', () => {
+    expect(getOrElse(() => 99)(None)).toBe(99);
+  });
+});
+
+describe('getOr', () => {
+  it('extracts Some value', () => {
+    expect(getOr(0)(Some(42))).toBe(42);
+  });
+  it('returns default on None', () => {
+    expect(getOr(99)(None)).toBe(99);
   });
 });

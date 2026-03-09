@@ -8,25 +8,50 @@
 // ============================================================================
 
 /**
- * Composes async functions left-to-right, returning a **new function** (point-free).
- * This is the async equivalent of `flow`, not `pipe` — it does not accept a value
- * directly; instead it returns a function that you call with the initial value.
+ * Async left-to-right composition with **two calling conventions**:
  *
- * Use `flowAsync` as a self-documenting alias if you prefer the `flow` naming:
+ * **Value-first** (like sync `pipe`) — pass an initial value, get a `Promise` back immediately:
+ * ```ts
+ * const result = await pipeAsync(5, async n => n * 2, async n => n + 1); // Promise<11>
+ * ```
  *
- * @example
- * const fetchUser = async (id: string) => ({ id, name: 'Alice' });
- * const getEmail = async (user: { email: string }) => user.email;
- * const sendEmail = async (email: string) => console.log(`Sent to ${email}`);
+ * **Point-free** (like `flow`) — pass only functions, get a reusable async pipeline back:
+ * ```ts
+ * const double = async (n: number) => n * 2;
+ * const inc    = async (n: number) => n + 1;
+ * const process = pipeAsync(double, inc);   // (n: number) => Promise<number>
+ * await process(5); // 11
+ * ```
  *
- * // pipeAsync — point-free (returns a function)
- * const process = pipeAsync(fetchUser, getEmail, sendEmail);
- * await process('user-123');
- *
- * // flowAsync — identical behaviour, explicit name
- * const process2 = flowAsync(fetchUser, getEmail, sendEmail);
- * await process2('user-123');
+ * TypeScript distinguishes the two forms: if the first argument is a **non-function value**,
+ * `pipeAsync` executes immediately; if it is a function, it returns a composed function.
+ * Use the `flowAsync` alias when you want to make the point-free intent explicit.
  */
+// ── Value-first overloads ──────────────────────────────────────────────────
+export function pipeAsync<A>(value: A): Promise<A>;
+export function pipeAsync<A, B>(
+  value: A, fn1: (a: A) => Promise<B>
+): Promise<B>;
+export function pipeAsync<A, B, C>(
+  value: A, fn1: (a: A) => Promise<B>, fn2: (b: B) => Promise<C>
+): Promise<C>;
+export function pipeAsync<A, B, C, D>(
+  value: A, fn1: (a: A) => Promise<B>, fn2: (b: B) => Promise<C>, fn3: (c: C) => Promise<D>
+): Promise<D>;
+export function pipeAsync<A, B, C, D, E>(
+  value: A, fn1: (a: A) => Promise<B>, fn2: (b: B) => Promise<C>,
+  fn3: (c: C) => Promise<D>, fn4: (d: D) => Promise<E>
+): Promise<E>;
+export function pipeAsync<A, B, C, D, E, F>(
+  value: A, fn1: (a: A) => Promise<B>, fn2: (b: B) => Promise<C>,
+  fn3: (c: C) => Promise<D>, fn4: (d: D) => Promise<E>, fn5: (e: E) => Promise<F>
+): Promise<F>;
+export function pipeAsync<A, B, C, D, E, F, G>(
+  value: A, fn1: (a: A) => Promise<B>, fn2: (b: B) => Promise<C>,
+  fn3: (c: C) => Promise<D>, fn4: (d: D) => Promise<E>, fn5: (e: E) => Promise<F>,
+  fn6: (f: F) => Promise<G>
+): Promise<G>;
+// ── Point-free overloads ───────────────────────────────────────────────────
 export function pipeAsync<A, B>(fn1: (a: A) => Promise<B>): (a: A) => Promise<B>;
 export function pipeAsync<A, B, C>(
   fn1: (a: A) => Promise<B>,
@@ -100,16 +125,26 @@ export function pipeAsync<A, B, C, D, E, F, G, H, I, J, K>(
   fn9: (i: I) => Promise<J>,
   fn10: (j: J) => Promise<K>
 ): (a: A) => Promise<K>;
-export function pipeAsync(
-  ...fns: Array<(arg: unknown) => Promise<unknown>>
-): (value: unknown) => Promise<unknown> {
-  return async (value: unknown): Promise<unknown> => {
-    let result: unknown = value;
-    for (const fn of fns) {
-      result = await fn(result);
-    }
+// ── Implementation ─────────────────────────────────────────────────────────
+export function pipeAsync(...args: unknown[]): unknown {
+  const runPipeline = async (
+    initial: unknown,
+    fns: Array<(arg: unknown) => Promise<unknown>>
+  ): Promise<unknown> => {
+    let result = initial;
+    for (const fn of fns) result = await fn(result);
     return result;
   };
+
+  if (typeof args[0] !== 'function') {
+    // Value-first: execute immediately, return Promise
+    const [value, ...fns] = args as [unknown, ...Array<(arg: unknown) => Promise<unknown>>];
+    return runPipeline(value, fns);
+  }
+
+  // Point-free: return composed function
+  const fns = args as Array<(arg: unknown) => Promise<unknown>>;
+  return (value: unknown) => runPipeline(value, fns);
 }
 
 /**

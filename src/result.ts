@@ -62,7 +62,19 @@ export const isErr = <T, E>(result: Result<T, E>): result is { ok: false; error:
 // ============================================================================
 
 /**
- * Map over Result value (only if Ok)
+ * Map over Result value (only if Ok). Use for **pure** transforms (`T → R`).
+ *
+ * > **When to use `flatMap` instead:**
+ * > If your transform itself returns a `Result<R, E>`, use {@link flatMap} —
+ * > `mapResult` would produce a double-nested `Result<Result<R,E>, E>`.
+ * >
+ * > ```ts
+ * > // Pure transform — mapResult:
+ * > pipe(Ok(5), mapResult(x => x * 2))           // Ok(10)
+ * >
+ * > // Fallible transform — flatMap:
+ * > pipe(Ok(data), flatMap(parseField('name')))   // Ok(name) | Err(...)
+ * > ```
  *
  * @example
  * const result = Ok(5);

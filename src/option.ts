@@ -168,3 +168,45 @@ export const compactOptions = <T>(opts: Array<Option<T>>): T[] => {
   return result;
 };
 
+// ============================================================================
+// FILTERING
+// ============================================================================
+
+/**
+ * Keeps `Some` only if the predicate holds; converts to `None` otherwise.
+ * More ergonomic than `flatMapOption(v => cond ? Some(v) : None)` for simple guards.
+ *
+ * @example
+ * pipe(Some(42),  filterOption(n => n > 0)) // Some(42)
+ * pipe(Some(-1),  filterOption(n => n > 0)) // None
+ * pipe(None,      filterOption(n => n > 0)) // None
+ */
+export const filterOption =
+  <T>(pred: (value: T) => boolean) =>
+  (opt: Option<T>): Option<T> =>
+    isSome(opt) && pred(opt.value) ? opt : None;
+
+// ============================================================================
+// ERGONOMIC ALIASES
+// ============================================================================
+
+/**
+ * Alias for {@link unwrapOptionOrElse} — familiar name from fp-ts / Haskell.
+ * Extracts the inner value if Some, or computes a fallback if None.
+ *
+ * @example
+ * pipe(fromNullable(null), getOrElse(() => 0)) // 0
+ * pipe(Some(42),           getOrElse(() => 0)) // 42
+ */
+export const getOrElse = unwrapOptionOrElse;
+
+/**
+ * Alias for {@link unwrapOptionOr}.
+ * Extracts the inner value if Some, or returns the provided default if None.
+ *
+ * @example
+ * pipe(fromNullable(null), getOr(0)) // 0
+ * pipe(Some(42),           getOr(0)) // 42
+ */
+export const getOr = unwrapOptionOr;
+

@@ -13,12 +13,25 @@ import {
 } from '../src/async.js';
 import { Ok, Err, isOk, isErr, type Result } from '../src/result.js';
 
-describe('pipeAsync', () => {
+describe('pipeAsync (point-free)', () => {
   it('pipes async functions left-to-right', async () => {
     const add2 = async (n: number) => n + 2;
     const mult3 = async (n: number) => n * 3;
-    const result = await (pipeAsync as (f1: typeof add2, f2: typeof mult3) => (n: number) => Promise<number>)(add2, mult3)(5);
-    expect(result).toBe(21); // (5+2)*3
+    const pipeline = (pipeAsync as (f1: typeof add2, f2: typeof mult3) => (n: number) => Promise<number>)(add2, mult3);
+    expect(await pipeline(5)).toBe(21); // (5+2)*3
+  });
+});
+
+describe('pipeAsync (value-first)', () => {
+  it('executes immediately with initial value', async () => {
+    const double = async (n: number) => n * 2;
+    const inc    = async (n: number) => n + 1;
+    const result = await (pipeAsync as (v: number, f1: typeof double, f2: typeof inc) => Promise<number>)(5, double, inc);
+    expect(result).toBe(11); // 5*2+1
+  });
+  it('resolves with value when no fns provided', async () => {
+    const result = await (pipeAsync as (v: number) => Promise<number>)(42);
+    expect(result).toBe(42);
   });
 });
 
