@@ -15,7 +15,7 @@ const negate = (x: number) => -x;
 // ============================================================================
 
 describe('composition.pipe — 5 steps, number', () => {
-  bench('fp-core', () => {
+  bench('alchemy', () => {
     pipe(10, add1, double, sub3, square, negate);
   });
 
@@ -37,7 +37,7 @@ describe('composition.pipe — 5 steps, number', () => {
 // ============================================================================
 
 describe('composition.compose — 5 steps, number', () => {
-  bench('fp-core', () => {
+  bench('alchemy', () => {
     compose(negate, square, sub3, double, add1)(10);
   });
 

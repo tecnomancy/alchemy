@@ -203,4 +203,4 @@ Until `1.0.0`, minor releases may include breaking changes if they are clearly d
 
 ## License
 
-MIT © [roxdavirox](https://github.com/roxdavirox)
+MIT © [tecnomancy](https://github.com/tecnomancy)

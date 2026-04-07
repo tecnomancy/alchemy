@@ -12,7 +12,7 @@ interface FiveKey { a: number; b: number; c: number; d: number; e: number }
 const OBJ: FiveKey = { a: 1, b: 2, c: 3, d: 4, e: 5 };
 
 describe('object.pick — 5-key object, pick 2', () => {
-  bench('fp-core', () => {
+  bench('alchemy', () => {
     pick<FiveKey, 'a' | 'b'>(['a', 'b'])(OBJ);
   });
 
@@ -34,7 +34,7 @@ describe('object.pick — 5-key object, pick 2', () => {
 // ============================================================================
 
 describe('object.omit — 5-key object, omit 2', () => {
-  bench('fp-core', () => {
+  bench('alchemy', () => {
     omit<FiveKey, 'd' | 'e'>(['d', 'e'])(OBJ);
   });
 
@@ -59,7 +59,7 @@ const BASE = { a: 1, b: 2 };
 const PATCH = { b: 99, c: 3 };
 
 describe('object.merge — shallow merge', () => {
-  bench('fp-core', () => {
+  bench('alchemy', () => {
     merge(BASE)(PATCH);
   });
 
@@ -88,7 +88,7 @@ interface Nested { user: { profile: { name: string; age: number } } }
 const NESTED: Nested = { user: { profile: { name: 'Alice', age: 30 } } };
 
 describe('object.getPath — 3-level deep access', () => {
-  bench('fp-core', () => {
+  bench('alchemy', () => {
     getPath<Nested>(['user', 'profile', 'name'])(NESTED);
   });
 

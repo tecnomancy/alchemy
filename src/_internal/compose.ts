@@ -44,7 +44,11 @@ export function compose<A, B, C, D, E, F, G, H, I, J, K>(
   f10: (j: J) => K, f9: (i: I) => J, f8: (h: H) => I, f7: (g: G) => H, f6: (f: F) => G,
   f5: (e: E) => F, f4: (d: D) => E, f3: (c: C) => D, f2: (b: B) => C, f1: (a: A) => B): (a: A) => K;
 export function compose(...fns: Array<(x: unknown) => unknown>): (a: unknown) => unknown {
-  return (value: unknown) => fns.reduceRight((acc, fn) => fn(acc), value);
+  return (value: unknown) => {
+    let result = value;
+    for (let i = fns.length - 1; i >= 0; i--) result = fns[i]!(result);
+    return result;
+  };
 }
 
 // ============================================================================
@@ -92,5 +96,9 @@ export function flow<A, B, C, D, E, F, G, H, I, J, K>(
   f4: (d: D) => E, f5: (e: E) => F, f6: (f: F) => G,
   f7: (g: G) => H, f8: (h: H) => I, f9: (i: I) => J, f10: (j: J) => K): (a: A) => K;
 export function flow(...fns: Array<(x: unknown) => unknown>): (a: unknown) => unknown {
-  return (value: unknown) => fns.reduce((acc, fn) => fn(acc), value);
+  return (value: unknown) => {
+    let result = value;
+    for (let i = 0; i < fns.length; i++) result = fns[i]!(result);
+    return result;
+  };
 }

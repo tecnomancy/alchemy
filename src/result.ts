@@ -9,9 +9,20 @@
 // ============================================================================
 
 /**
- * Result type - represents success (Ok) or failure (Err)
+ * Branded Ok variant — success branch of a Result.
  */
-export type Result<T, E = Error> = { ok: true; value: T } | { ok: false; error: E };
+export type Ok<T> = { readonly _tag: 'Ok'; readonly ok: true; readonly value: T };
+
+/**
+ * Branded Err variant — failure branch of a Result.
+ */
+export type Err<E> = { readonly _tag: 'Err'; readonly ok: false; readonly error: E };
+
+/**
+ * Result type — represents success (Ok) or failure (Err).
+ * Uses `_tag` discriminant for structural consistency with Option.
+ */
+export type Result<T, E = Error> = Ok<T> | Err<E>;
 
 // ============================================================================
 // CONSTRUCTORS
@@ -22,9 +33,10 @@ export type Result<T, E = Error> = { ok: true; value: T } | { ok: false; error: 
  *
  * @example
  * const result = Ok(42);
- * // { ok: true, value: 42 }
+ * // { _tag: 'Ok', ok: true, value: 42 }
  */
 export const Ok = <T, E = Error>(value: T): Result<T, E> => ({
+  _tag: 'Ok',
   ok: true,
   value,
 });
@@ -34,9 +46,10 @@ export const Ok = <T, E = Error>(value: T): Result<T, E> => ({
  *
  * @example
  * const result = Err(new Error('Failed'));
- * // { ok: false, error: Error(...) }
+ * // { _tag: 'Err', ok: false, error: Error(...) }
  */
 export const Err = <T, E = Error>(error: E): Result<T, E> => ({
+  _tag: 'Err',
   ok: false,
   error,
 });
@@ -48,14 +61,14 @@ export const Err = <T, E = Error>(error: E): Result<T, E> => ({
 /**
  * Checks if Result is Ok
  */
-export const isOk = <T, E>(result: Result<T, E>): result is { ok: true; value: T } =>
-  result.ok === true;
+export const isOk = <T, E>(result: Result<T, E>): result is Ok<T> =>
+  result._tag === 'Ok';
 
 /**
  * Checks if Result is Err
  */
-export const isErr = <T, E>(result: Result<T, E>): result is { ok: false; error: E } =>
-  result.ok === false;
+export const isErr = <T, E>(result: Result<T, E>): result is Err<E> =>
+  result._tag === 'Err';
 
 // ============================================================================
 // TRANSFORMATIONS
@@ -134,7 +147,7 @@ export const unwrap = <T, E>(result: Result<T, E>): T => {
 };
 
 /**
- * UnwrapOr - extrai valor ou retorna default
+ * Extracts the value if Ok, otherwise returns the provided default
  *
  * @example
  * unwrapOr(0)(Ok(42)); // 42
@@ -146,7 +159,7 @@ export const unwrapOr =
     isOk(result) ? result.value : defaultValue;
 
 /**
- * UnwrapOrElse - extrai valor ou computa default
+ * Extracts the value if Ok, otherwise computes a fallback from the error
  *
  * @example
  * const getDefault = (e: Error) => {
@@ -161,7 +174,7 @@ export const unwrapOrElse =
     isOk(result) ? result.value : fn(result.error);
 
 /**
- * Match - pattern matching sobre Result
+ * Pattern match on a Result — apply one of two functions depending on Ok/Err
  *
  * @example
  * const result = Ok(42);
@@ -244,21 +257,27 @@ export const fromNullableResult =
 // ============================================================================
 
 /**
- * Combines two Results - both must be Ok
+ * Lift a 2-argument function to operate on two `Result` values.
+ * Returns `Ok(fn(a, b))` if both are `Ok`, otherwise returns the first `Err`.
  *
  * @example
- * const r1 = Ok(5);
- * const r2 = Ok(10);
- * const combined = combineTwo((a, b) => a + b)(r1, r2);
- * // Ok(15)
+ * const add = (a: number, b: number) => a + b;
+ * liftA2(add)(Ok(3), Ok(4));    // Ok(7)
+ * liftA2(add)(Err('x'), Ok(4)); // Err('x')
+ * liftA2(add)(Ok(3), Err('y')); // Err('y')
  */
-export const combineTwo =
+export const liftA2 =
   <T1, T2, R, E>(fn: (v1: T1, v2: T2) => R) =>
   (r1: Result<T1, E>, r2: Result<T2, E>): Result<R, E> => {
     if (isErr(r1)) return r1;
     if (isErr(r2)) return r2;
     return Ok(fn(r1.value, r2.value));
   };
+
+/**
+ * @deprecated Use {@link liftA2} instead.
+ */
+export const combineTwo = liftA2;
 
 /**
  * Combines array of Results - all must be Ok
@@ -304,20 +323,6 @@ export const ap =
   };
 
 /**
- * Lift a 2-argument function to operate on two `Result` values.
- * Returns `Ok(fn(a, b))` if both are `Ok`, otherwise returns the first `Err`.
- *
- * Alias for {@link combineTwo}.
- *
- * @example
- * const add = (a: number, b: number) => a + b;
- * liftA2(add)(Ok(3), Ok(4));    // Ok(7)
- * liftA2(add)(Err('x'), Ok(4)); // Err('x')
- * liftA2(add)(Ok(3), Err('y')); // Err('y')
- */
-export const liftA2 = combineTwo;
-
-/**
  * Lift a 3-argument function to operate on three `Result` values.
  * Returns `Ok(fn(a, b, c))` if all are `Ok`, otherwise returns the first `Err`.
  *
@@ -342,8 +347,8 @@ export const liftA3 =
  * @example
  * const results = [Ok(1), Err('e1'), Ok(2), Err('e2')];
  * const combined = collectErrors(results);
- * // Err(['e1', 'e2']) se houver erros
- * // Ok([1, 2]) se todos Ok
+ * // Err(['e1', 'e2']) if there are errors
+ * // Ok([1, 2]) if all Ok
  */
 export const collectErrors = <T, E>(results: Array<Result<T, E>>): Result<T[], E[]> => {
   const values: T[] = [];
@@ -364,44 +369,75 @@ export const collectErrors = <T, E>(results: Array<Result<T, E>>): Result<T[], E
 // ASYNC UTILITIES
 // ============================================================================
 
-/**
- * Converts a Promise to a Result
- *
- * @example
- * const result = await fromPromise(fetch('/api/data'));
- * // Ok(response) ou Err(error)
- */
-export const fromPromise = async <T, E = Error>(promise: Promise<T>): Promise<Result<T, E>> => {
-  try {
-    const value = await promise;
-    return Ok(value);
-  } catch (error) {
-    return Err((error instanceof Error ? error : new Error(String(error))) as unknown as E);
-  }
-};
+/** Normalizes an unknown thrown value into an Error. */
+const normalizeError = (error: unknown): Error =>
+  error instanceof Error ? error : new Error(String(error));
 
 /**
- * Converts a throwing function into one that returns Result
+ * Converts a Promise to a Result.
+ *
+ * Without an error mapper, the error type is `Error` (no unsafe cast).
+ * With an error mapper, you control the error type precisely.
  *
  * @example
- * const divide = (x: number, y: number) => {
+ * // Error type is Error (safe default)
+ * const result = await fromPromise(fetch('/api/data'));
+ *
+ * // Custom error type via mapper
+ * const result = await fromPromise(fetch('/api'), e => e.message);
+ */
+export function fromPromise<T>(promise: Promise<T>): Promise<Result<T, Error>>;
+export function fromPromise<T, E>(promise: Promise<T>, mapError: (e: Error) => E): Promise<Result<T, E>>;
+export async function fromPromise<T, E = Error>(
+  promise: Promise<T>,
+  mapError?: (e: Error) => E,
+): Promise<Result<T, E>> {
+  try {
+    return Ok(await promise);
+  } catch (error) {
+    const normalized = normalizeError(error);
+    return Err((mapError ? mapError(normalized) : normalized) as E);
+  }
+}
+
+/**
+ * Wraps a throwing function into one that returns Result.
+ *
+ * Without an error mapper, errors are normalized to `Error`.
+ * With an error mapper, you control the error type precisely.
+ *
+ * @example
+ * const safeDivide = tryCatch((x: number, y: number) => {
  *   if (y === 0) throw new Error('Division by zero');
  *   return x / y;
- * };
- *
- * const safeDivide = tryCatch(divide);
+ * });
  * safeDivide(10, 0); // Err(Error('Division by zero'))
  * safeDivide(10, 2); // Ok(5)
+ *
+ * // With custom error type
+ * const safe = tryCatch(parse, e => e.message);
+ * safe(input); // Result<T, string>
  */
-export const tryCatch =
-  <T extends unknown[], R, E = Error>(fn: (...args: T) => R) =>
-  (...args: T): Result<R, E> => {
+export function tryCatch<T extends unknown[], R>(
+  fn: (...args: T) => R,
+): (...args: T) => Result<R, Error>;
+export function tryCatch<T extends unknown[], R, E>(
+  fn: (...args: T) => R,
+  mapError: (e: Error) => E,
+): (...args: T) => Result<R, E>;
+export function tryCatch<T extends unknown[], R, E = Error>(
+  fn: (...args: T) => R,
+  mapError?: (e: Error) => E,
+): (...args: T) => Result<R, E> {
+  return (...args: T): Result<R, E> => {
     try {
       return Ok(fn(...args));
     } catch (error) {
-      return Err((error instanceof Error ? error : new Error(String(error))) as unknown as E);
+      const normalized = normalizeError(error);
+      return Err((mapError ? mapError(normalized) : normalized) as E);
     }
   };
+}
 
 // ============================================================================
 // BIMAP / MAPBOTH
@@ -441,28 +477,43 @@ export const swap = <T, E>(result: Result<T, E>): Result<E, T> =>
   isOk(result) ? Err(result.value) : Ok(result.error);
 
 /**
- * Async version of tryCatch
+ * Wraps an async throwing function into one that returns Promise<Result>.
+ *
+ * Without an error mapper, errors are normalized to `Error`.
+ * With an error mapper, you control the error type precisely.
  *
  * @example
- * const fetchUser = async (id: string) => {
+ * const safeFetch = tryCatchAsync(async (id: string) => {
  *   const res = await fetch(`/users/${id}`);
  *   if (!res.ok) throw new Error('Not found');
  *   return res.json();
- * };
- *
- * const safeFetch = tryCatchAsync(fetchUser);
+ * });
  * await safeFetch('123'); // Result<User, Error>
+ *
+ * // With custom error type
+ * const safe = tryCatchAsync(fetchUser, e => e.message);
+ * await safe('123'); // Result<User, string>
  */
-export const tryCatchAsync =
-  <T extends unknown[], R, E = Error>(fn: (...args: T) => Promise<R>) =>
-  async (...args: T): Promise<Result<R, E>> => {
+export function tryCatchAsync<T extends unknown[], R>(
+  fn: (...args: T) => Promise<R>,
+): (...args: T) => Promise<Result<R, Error>>;
+export function tryCatchAsync<T extends unknown[], R, E>(
+  fn: (...args: T) => Promise<R>,
+  mapError: (e: Error) => E,
+): (...args: T) => Promise<Result<R, E>>;
+export function tryCatchAsync<T extends unknown[], R, E = Error>(
+  fn: (...args: T) => Promise<R>,
+  mapError?: (e: Error) => E,
+): (...args: T) => Promise<Result<R, E>> {
+  return async (...args: T): Promise<Result<R, E>> => {
     try {
-      const value = await fn(...args);
-      return Ok(value);
+      return Ok(await fn(...args));
     } catch (error) {
-      return Err((error instanceof Error ? error : new Error(String(error))) as unknown as E);
+      const normalized = normalizeError(error);
+      return Err((mapError ? mapError(normalized) : normalized) as E);
     }
   };
+}
 
 /**
  * Async map over Result
@@ -612,4 +663,63 @@ export const validateCollect =
     }
 
     return errors.length === 0 ? Ok(value) : Err(errors);
+  };
+
+// ============================================================================
+// ADDITIONAL COMBINATORS
+// ============================================================================
+
+/**
+ * Alias for flatMap — standard FP name (Fantasy Land, fp-ts).
+ */
+export const chain = flatMap;
+
+/**
+ * Alias for combineAll — standard FP name for collecting an array of Results.
+ */
+export const sequenceResult = combineAll;
+
+/**
+ * Lifts a predicate into a Result. Returns Ok if the predicate holds,
+ * otherwise Err with the value produced by `onFalse`.
+ *
+ * @example
+ * const isPositive = fromPredicate(
+ *   (n: number) => n > 0,
+ *   n => `${n} is not positive`,
+ * );
+ * isPositive(5);  // Ok(5)
+ * isPositive(-1); // Err('-1 is not positive')
+ */
+export const fromPredicate =
+  <T, E>(predicate: (value: T) => boolean, onFalse: (value: T) => E) =>
+  (value: T): Result<T, E> =>
+    predicate(value) ? Ok(value) : Err(onFalse(value));
+
+/**
+ * Maps each element through a Result-returning function and collects
+ * all Ok values. Short-circuits on the first Err (fail-fast).
+ *
+ * More efficient than `map(fn) |> combineAll` because it avoids
+ * building the intermediate Result array.
+ *
+ * @example
+ * const parseNum = (s: string): Result<number, string> => {
+ *   const n = Number(s);
+ *   return isNaN(n) ? Err(`"${s}" is not a number`) : Ok(n);
+ * };
+ *
+ * traverseResult(parseNum)(['1', '2', '3']); // Ok([1, 2, 3])
+ * traverseResult(parseNum)(['1', 'x', '3']); // Err('"x" is not a number')
+ */
+export const traverseResult =
+  <T, R, E>(fn: (value: T) => Result<R, E>) =>
+  (arr: T[]): Result<R[], E> => {
+    const values: R[] = [];
+    for (const item of arr) {
+      const result = fn(item);
+      if (isErr(result)) return result;
+      values.push(result.value);
+    }
+    return Ok(values);
   };

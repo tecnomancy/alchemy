@@ -8,7 +8,7 @@
 
 ## Coming from Ramda
 
-| Ramda | fp-core |
+| Ramda | alchemy |
 |-------|---------|
 | `R.pipe(f, g)(x)` | `pipe(x, f, g)` |
 | `R.compose(g, f)(x)` | `compose(g, f)(x)` |
@@ -31,14 +31,14 @@
 
 Key differences:
 - **Value-first pipe**: `pipe(value, f, g)` instead of `pipe(f, g)(value)`. TypeScript infers every step without losing types.
-- **No `Maybe`/`Either`**: fp-core uses `Option<T>` and `Result<T, E>` with explicit constructors.
-- **No lens/transducer**: fp-core is intentionally limited to everyday utilities.
+- **No `Maybe`/`Either`**: alchemy uses `Option<T>` and `Result<T, E>` with explicit constructors.
+- **No lens/transducer**: alchemy is intentionally limited to everyday utilities.
 
 ---
 
 ## Coming from fp-ts
 
-| fp-ts | fp-core |
+| fp-ts | alchemy |
 |-------|---------|
 | `pipe(x, TE.map(f))` | `pipe(x, mapResult(f))` |
 | `E.right(x)` / `E.left(e)` | `Ok(x)` / `Err(e)` |
@@ -57,15 +57,15 @@ Key differences:
 | `flow(f, g)` | `flow(f, g)` or `pipe(x, f, g)` |
 
 Key differences:
-- **No HKT encoding**: fp-core does not use higher-kinded type emulation. The API is simpler but less polymorphic.
+- **No HKT encoding**: alchemy does not use higher-kinded type emulation. The API is simpler but less polymorphic.
 - **No type class hierarchy**: there is no `Functor`, `Monad`, or `Applicative` abstraction — each type has its own named functions.
-- **`match` argument order**: fp-core uses `match(onOk, onErr)` (success first), while fp-ts uses `fold(onLeft, onRight)` (failure first).
+- **`match` argument order**: alchemy uses `match(onOk, onErr)` (success first), while fp-ts uses `fold(onLeft, onRight)` (failure first).
 
 ---
 
 ## Coming from lodash/fp
 
-| lodash/fp | fp-core |
+| lodash/fp | alchemy |
 |-----------|---------|
 | `_.map(fn)(arr)` | `map(fn)(arr)` |
 | `_.filter(pred)(arr)` | `filter(pred)(arr)` |
@@ -90,4 +90,4 @@ Key differences:
 Key differences:
 - **TypeScript-native**: every function is typed precisely; no `any` leakage from lodash's overloads.
 - **No `_` namespace or chaining**: compose pipelines with `pipe` instead.
-- **Result/Option built-in**: fp-core replaces try/catch and null-check patterns structurally.
+- **Result/Option built-in**: alchemy replaces try/catch and null-check patterns structurally.

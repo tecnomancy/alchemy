@@ -3,7 +3,7 @@ import {
   Ok, Err,
   isOk, isErr,
   mapResult, mapErr,
-  flatMap, andThen,
+  flatMap, andThen, chain,
   match,
   unwrap, unwrapOr, unwrapOrElse,
   combineAll, combineTwo, collectErrors,
@@ -14,6 +14,7 @@ import {
   tapResult, tapError, orElse, fromNullableResult,
   bimap, mapLeft, swap,
   ap, liftA2, liftA3,
+  fromPredicate, sequenceResult, traverseResult,
   type Result,
 } from '../src/result.js';
 import { Some, None } from '../src/option.js';
@@ -437,5 +438,135 @@ describe('liftA3', () => {
       Err<number, string>('second'),
       Err<number, string>('third'),
     )).toEqual(Err('first'));
+  });
+});
+
+// ============================================================================
+// _tag discriminant
+// ============================================================================
+
+describe('Result — _tag discriminant', () => {
+  it('Ok has _tag "Ok"', () => {
+    const r = Ok(42);
+    expect(r._tag).toBe('Ok');
+  });
+
+  it('Err has _tag "Err"', () => {
+    const r = Err('fail');
+    expect(r._tag).toBe('Err');
+  });
+
+  it('isOk narrows via _tag', () => {
+    const r: Result<number, string> = Ok(1);
+    if (isOk(r)) {
+      expect(r._tag).toBe('Ok');
+      expect(r.value).toBe(1);
+    }
+  });
+
+  it('isErr narrows via _tag', () => {
+    const r: Result<number, string> = Err('x');
+    if (isErr(r)) {
+      expect(r._tag).toBe('Err');
+      expect(r.error).toBe('x');
+    }
+  });
+});
+
+// ============================================================================
+// New combinators
+// ============================================================================
+
+describe('Result — fromPredicate', () => {
+  const isPositive = fromPredicate(
+    (n: number) => n > 0,
+    (n: number) => `${n} is not positive`,
+  );
+
+  it('returns Ok when predicate passes', () => {
+    expect(isPositive(5)).toEqual(Ok(5));
+  });
+
+  it('returns Err when predicate fails', () => {
+    expect(isPositive(-1)).toEqual(Err('-1 is not positive'));
+  });
+});
+
+describe('Result — chain (alias for flatMap)', () => {
+  it('chains like flatMap', () => {
+    const double = (n: number): Result<number, string> => Ok(n * 2);
+    expect(chain(double)(Ok(5))).toEqual(Ok(10));
+    expect(chain(double)(Err('x'))).toEqual(Err('x'));
+  });
+});
+
+describe('Result — sequenceResult (alias for combineAll)', () => {
+  it('sequences like combineAll', () => {
+    expect(sequenceResult([Ok(1), Ok(2), Ok(3)])).toEqual(Ok([1, 2, 3]));
+    expect(isErr(sequenceResult([Ok(1), Err('x')]))).toBe(true);
+  });
+});
+
+describe('Result — traverseResult', () => {
+  const parseNum = (s: string): Result<number, string> => {
+    const n = Number(s);
+    return isNaN(n) ? Err(`"${s}" is not a number`) : Ok(n);
+  };
+
+  it('maps and sequences in one pass (all Ok)', () => {
+    expect(traverseResult(parseNum)(['1', '2', '3'])).toEqual(Ok([1, 2, 3]));
+  });
+
+  it('short-circuits on first Err', () => {
+    const result = traverseResult(parseNum)(['1', 'x', '3']);
+    expect(isErr(result)).toBe(true);
+    if (isErr(result)) expect(result.error).toBe('"x" is not a number');
+  });
+
+  it('returns Ok([]) for empty array', () => {
+    expect(traverseResult(parseNum)([])).toEqual(Ok([]));
+  });
+});
+
+describe('Result — fromPromise with error mapper', () => {
+  it('returns Ok for resolved promise', async () => {
+    const r = await fromPromise(Promise.resolve(42));
+    expect(r).toEqual(Ok(42));
+  });
+
+  it('returns Err(Error) without mapper', async () => {
+    const r = await fromPromise(Promise.reject(new Error('fail')));
+    expect(isErr(r)).toBe(true);
+    if (isErr(r)) expect(r.error).toBeInstanceOf(Error);
+  });
+
+  it('returns Err(E) with mapper', async () => {
+    const r = await fromPromise(
+      Promise.reject(new Error('fail')),
+      e => e.message,
+    );
+    expect(r).toEqual(Err('fail'));
+  });
+});
+
+describe('Result — tryCatch with error mapper', () => {
+  it('returns Ok for non-throwing fn', () => {
+    const safe = tryCatch((n: number) => n * 2);
+    expect(safe(5)).toEqual(Ok(10));
+  });
+
+  it('returns Err(Error) without mapper', () => {
+    const safe = tryCatch(() => { throw new Error('boom'); });
+    const r = safe();
+    expect(isErr(r)).toBe(true);
+    if (isErr(r)) expect(r.error).toBeInstanceOf(Error);
+  });
+
+  it('returns Err(E) with mapper', () => {
+    const safe = tryCatch(
+      () => { throw new Error('boom'); },
+      e => e.message,
+    );
+    expect(safe()).toEqual(Err('boom'));
   });
 });

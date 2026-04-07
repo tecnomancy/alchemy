@@ -1,4 +1,4 @@
-# fp-core API Reference
+# alchemy API Reference
 
 Complete reference for all exported functions, organized by module.
 
@@ -6,11 +6,11 @@ Complete reference for all exported functions, organized by module.
 
 ```typescript
 // Root barrel — everything
-import { pipe, Ok, Err, Some, None } from '@roxdavirox/fp-core';
+import { pipe, Ok, Err, Some, None } from '@tecnomancy/alchemy';
 
 // Subpath — one module
-import { Ok, Err, flatMap } from '@roxdavirox/fp-core/result';
-import { pipe, compose } from '@roxdavirox/fp-core/composition';
+import { Ok, Err, flatMap } from '@tecnomancy/alchemy/result';
+import { pipe, compose } from '@tecnomancy/alchemy/composition';
 ```
 
 ---
@@ -30,7 +30,7 @@ import { pipe, compose } from '@roxdavirox/fp-core/composition';
 
 ## Result\<T, E\>
 
-`import { ... } from '@roxdavirox/fp-core/result'`
+`import { ... } from '@tecnomancy/alchemy/result'`
 
 Represents a value that is either a success (`Ok`) or a failure (`Err`).
 Use `Result` instead of throwing exceptions for expected failure paths.
@@ -563,7 +563,7 @@ fromNullableResult('not found')(undefined); // Err('not found')
 
 ## Option\<T\>
 
-`import { ... } from '@roxdavirox/fp-core/option'`
+`import { ... } from '@tecnomancy/alchemy/option'`
 
 Represents a value that may or may not be present. Use `Option` to eliminate `null`/`undefined` from your domain types.
 
@@ -856,7 +856,7 @@ resultToOption(Err('oops')); // None
 
 ## Composition
 
-`import { ... } from '@roxdavirox/fp-core/composition'`
+`import { ... } from '@tecnomancy/alchemy/composition'`
 
 ### `pipe(value, ...fns)`
 
@@ -1106,7 +1106,7 @@ isOdd(3); // true
 
 ## Async
 
-`import { ... } from '@roxdavirox/fp-core/async'`
+`import { ... } from '@tecnomancy/alchemy/async'`
 
 ### `pipeAsync(...fns)(value)`
 
@@ -1343,7 +1343,7 @@ await parallel([
 
 **Example:**
 ```typescript
-import { mapConcurrentResult, mapAsyncResult, collectErrors } from '@roxdavirox/fp-core';
+import { mapConcurrentResult, mapAsyncResult, collectErrors } from '@tecnomancy/alchemy';
 
 // mapAsyncResult — sequential, collects all errors
 const results = await mapAsyncResult(
@@ -1362,7 +1362,7 @@ const results2 = await mapConcurrentResult(
 
 ## Array
 
-`import { ... } from '@roxdavirox/fp-core/array'`
+`import { ... } from '@tecnomancy/alchemy/array'`
 
 All array functions are curried and data-last — designed to compose inside `pipe`.
 
@@ -1414,7 +1414,7 @@ All array functions are curried and data-last — designed to compose inside `pi
 
 **Example:**
 ```typescript
-import { head, tail, last, nth } from '@roxdavirox/fp-core';
+import { head, tail, last, nth } from '@tecnomancy/alchemy';
 
 head([1, 2, 3]); // Some(1)
 head([]);        // None
@@ -1443,7 +1443,7 @@ const [evens, odds] = partition(n => n % 2 === 0)([1, 2, 3, 4]);
 
 ## Object
 
-`import { ... } from '@roxdavirox/fp-core/object'`
+`import { ... } from '@tecnomancy/alchemy/object'`
 
 ### Picking & Merging
 
@@ -1523,7 +1523,7 @@ getPath(['db', 'port'])(config); // 5432
 
 ## String
 
-`import { ... } from '@roxdavirox/fp-core/string'`
+`import { ... } from '@tecnomancy/alchemy/string'`
 
 ### Case Conversion
 
@@ -1621,7 +1621,7 @@ format('Hello %s, you are %d years old')('Alice', 30);
 
 ## Predicates
 
-`import { ... } from '@roxdavirox/fp-core/predicates'`
+`import { ... } from '@tecnomancy/alchemy/predicates'`
 
 ### Logical Combinators
 
