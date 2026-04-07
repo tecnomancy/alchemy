@@ -52,5 +52,7 @@ export function pipe<A, B, C, D, E, F, G, H, I, J, K>(
   f4: (d: D) => E, f5: (e: E) => F, f6: (f: F) => G, f7: (g: G) => H,
   f8: (h: H) => I, f9: (i: I) => J, f10: (j: J) => K): K;
 export function pipe(value: unknown, ...fns: Array<(x: unknown) => unknown>): unknown {
-  return fns.reduce((acc, fn) => fn(acc), value);
+  let result = value;
+  for (let i = 0; i < fns.length; i++) result = fns[i]!(result);
+  return result;
 }

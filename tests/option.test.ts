@@ -10,6 +10,7 @@ import {
   toNullable, toArray,
   zipOption, sequenceOption, compactOptions,
   filterOption, getOrElse, getOr,
+  fromPredicateOption, traverseOption,
 } from '../src/option.js';
 import { Ok, Err, isOk, isErr } from '../src/result.js';
 import { optionToResult, resultToOption } from '../src/interop.js';
@@ -205,5 +206,42 @@ describe('getOr', () => {
   });
   it('returns default on None', () => {
     expect(getOr(99)(None)).toBe(99);
+  });
+});
+
+// ============================================================================
+// New combinators
+// ============================================================================
+
+describe('Option — fromPredicateOption', () => {
+  const positive = fromPredicateOption((n: number) => n > 0);
+
+  it('returns Some when predicate holds', () => {
+    expect(positive(5)).toEqual(Some(5));
+  });
+
+  it('returns None when predicate fails', () => {
+    expect(positive(-1)).toBe(None);
+  });
+
+  it('returns None for zero', () => {
+    expect(positive(0)).toBe(None);
+  });
+});
+
+describe('Option — traverseOption', () => {
+  const safeSqrt = (n: number) =>
+    n >= 0 ? Some(Math.sqrt(n)) : None;
+
+  it('maps and sequences (all Some)', () => {
+    expect(traverseOption(safeSqrt)([4, 9, 16])).toEqual(Some([2, 3, 4]));
+  });
+
+  it('short-circuits on first None', () => {
+    expect(traverseOption(safeSqrt)([4, -1, 16])).toBe(None);
+  });
+
+  it('returns Some([]) for empty array', () => {
+    expect(traverseOption(safeSqrt)([])).toEqual(Some([]));
   });
 });

@@ -3,6 +3,16 @@
  * @internal
  */
 
+// ── Internal helper (module-level, not re-created per call) ────────────────
+const runPipeline = async (
+  initial: unknown,
+  fns: Array<(arg: unknown) => Promise<unknown>>
+): Promise<unknown> => {
+  let result = initial;
+  for (const fn of fns) result = await fn(result);
+  return result;
+};
+
 // ============================================================================
 // ASYNC COMPOSITION
 // ============================================================================
@@ -127,15 +137,6 @@ export function pipeAsync<A, B, C, D, E, F, G, H, I, J, K>(
 ): (a: A) => Promise<K>;
 // ── Implementation ─────────────────────────────────────────────────────────
 export function pipeAsync(...args: unknown[]): unknown {
-  const runPipeline = async (
-    initial: unknown,
-    fns: Array<(arg: unknown) => Promise<unknown>>
-  ): Promise<unknown> => {
-    let result = initial;
-    for (const fn of fns) result = await fn(result);
-    return result;
-  };
-
   if (typeof args[0] !== 'function') {
     // Value-first: execute immediately, return Promise
     const [value, ...fns] = args as [unknown, ...Array<(arg: unknown) => Promise<unknown>>];

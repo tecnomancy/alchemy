@@ -151,7 +151,7 @@ export const mapConcurrentResult =
     for (const [index, item] of arr.entries()) {
       const p: Promise<void> = fn(item)
         .then(r => { settled[index] = r; })
-        .catch((e: unknown) => { settled[index] = Err(e as E); })
+        .catch((e: unknown) => { settled[index] = Err((e instanceof Error ? e : new Error(String(e))) as E); })
         .finally(() => { executing.delete(p); });
       executing.add(p);
       if (executing.size >= concurrency) await Promise.race(executing);

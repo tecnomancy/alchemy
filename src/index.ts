@@ -1,10 +1,10 @@
 /**
- * fp-core — Functional Programming Primitives for TypeScript
+ * alchemy — Functional Programming Primitives for TypeScript
  *
  * Zero-dependency. Tree-shakeable. TypeScript-native.
  * Every function is pure, curried, and data-last.
  *
- * @module @roxdavirox/fp-core
+ * @module @tecnomancy/alchemy
  */
 
 // Result<T, E> — explicit error handling, no exceptions

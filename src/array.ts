@@ -303,7 +303,7 @@ export const chunk =
  * // [1, 2, 3]
  */
 export const compact = <T>(arr: Array<T | null | undefined | false | 0 | ''>): T[] =>
-  arr.filter(Boolean) as T[];
+  arr.filter((x): x is T => Boolean(x));
 
 /**
  * Returns true if the value is a non-empty array.

@@ -210,3 +210,46 @@ export const getOrElse = unwrapOptionOrElse;
  */
 export const getOr = unwrapOptionOr;
 
+// ============================================================================
+// ADDITIONAL COMBINATORS
+// ============================================================================
+
+/**
+ * Lifts a predicate into an Option. Returns Some if the predicate holds,
+ * otherwise None.
+ *
+ * @example
+ * const positive = fromPredicateOption((n: number) => n > 0);
+ * positive(5);  // Some(5)
+ * positive(-1); // None
+ */
+export const fromPredicateOption =
+  <T>(predicate: (value: T) => boolean) =>
+  (value: T): Option<T> =>
+    predicate(value) ? Some(value) : None;
+
+/**
+ * Maps each element through an Option-returning function and collects
+ * all Some values. Short-circuits on the first None.
+ *
+ * More efficient than `map(fn) |> sequenceOption` because it avoids
+ * building the intermediate Option array.
+ *
+ * @example
+ * const safeSqrt = (n: number): Option<number> =>
+ *   n >= 0 ? Some(Math.sqrt(n)) : None;
+ *
+ * traverseOption(safeSqrt)([4, 9, 16]); // Some([2, 3, 4])
+ * traverseOption(safeSqrt)([4, -1, 16]); // None
+ */
+export const traverseOption =
+  <T, R>(fn: (value: T) => Option<R>) =>
+  (arr: T[]): Option<R[]> => {
+    const values: R[] = [];
+    for (const item of arr) {
+      const result = fn(item);
+      if (isNone(result)) return None;
+      values.push(result.value);
+    }
+    return Some(values);
+  };

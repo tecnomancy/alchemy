@@ -12,7 +12,7 @@ import { camelCase, truncate, format, template } from '../src/string.js';
 const SNAKE = 'hello_world_foo_bar';
 
 describe('string.camelCase', () => {
-  bench('fp-core', () => {
+  bench('alchemy', () => {
     camelCase(SNAKE);
   });
 
@@ -28,7 +28,7 @@ describe('string.camelCase', () => {
 const LONG = 'The quick brown fox jumps over the lazy dog near the riverbank';
 
 describe('string.truncate — 30 chars', () => {
-  bench('fp-core', () => {
+  bench('alchemy', () => {
     truncate(30)(LONG);
   });
 
@@ -44,7 +44,7 @@ describe('string.truncate — 30 chars', () => {
 const FMT = 'Hello %s, you are %d years old';
 
 describe('string.format — 2 printf placeholders', () => {
-  bench('fp-core', () => {
+  bench('alchemy', () => {
     format(FMT)('Alice', 30);
   });
 
@@ -63,7 +63,7 @@ const TMPL = 'Hello {{name}}, you have {{count}} messages.';
 const VALS = { name: 'Alice', count: 5 };
 
 describe('string.template — 2 key interpolations', () => {
-  bench('fp-core', () => {
+  bench('alchemy', () => {
     template(VALS)(TMPL);
   });
 

@@ -13,7 +13,7 @@ const isEven = (x: number) => x % 2 === 0;
 // ============================================================================
 
 describe('array.map — 1 000 numbers', () => {
-  bench('fp-core', () => {
+  bench('alchemy', () => {
     map(double)(NUMBERS);
   });
 
@@ -39,7 +39,7 @@ describe('array.map — 1 000 numbers', () => {
 // ============================================================================
 
 describe('array.filter — 1 000 numbers', () => {
-  bench('fp-core', () => {
+  bench('alchemy', () => {
     filter(isEven)(NUMBERS);
   });
 
@@ -68,7 +68,7 @@ const WORDS = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', '
 const byLength = (s: string) => String(s.length);
 
 describe('array.groupBy — 10 words', () => {
-  bench('fp-core', () => {
+  bench('alchemy', () => {
     groupBy(byLength)(WORDS);
   });
 
@@ -90,7 +90,7 @@ describe('array.groupBy — 10 words', () => {
 // ============================================================================
 
 describe('array.chunk — 1 000 numbers, size 10', () => {
-  bench('fp-core', () => {
+  bench('alchemy', () => {
     chunk(10)(NUMBERS);
   });
 

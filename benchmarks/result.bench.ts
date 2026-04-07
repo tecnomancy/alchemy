@@ -2,7 +2,7 @@ import { bench, describe } from 'vitest';
 import { Ok, Err, flatMap, match, combineAll, type Result } from '../src/result.js';
 
 // Competitors (Ramda, lodash, Remeda) have no Result/Either type.
-// The baseline is idiomatic try/catch to show fp-core's overhead vs. raw JS.
+// The baseline is idiomatic try/catch to show alchemy's overhead vs. raw JS.
 
 // ============================================================================
 // flatMap — chained safe computation
@@ -14,7 +14,7 @@ const safeDivide =
     x === 0 ? Err(new Error('division by zero')) : Ok(n / x);
 
 describe('result.flatMap — 3 chained operations', () => {
-  bench('fp-core', () => {
+  bench('alchemy', () => {
     flatMap(safeDivide(6))(
       flatMap(safeDivide(100))(Ok<number, Error>(10))
     );
@@ -44,7 +44,7 @@ const matchFns: [(v: number) => string, (e: Error) => string] = [
 ];
 
 describe('result.match — ok branch', () => {
-  bench('fp-core', () => {
+  bench('alchemy', () => {
     match(matchFns[0], matchFns[1])(okResult);
   });
 
@@ -56,7 +56,7 @@ describe('result.match — ok branch', () => {
 });
 
 describe('result.match — error branch', () => {
-  bench('fp-core', () => {
+  bench('alchemy', () => {
     match(matchFns[0], matchFns[1])(errResult);
   });
 
@@ -79,7 +79,7 @@ const MIXED_RESULTS: Result<number, Error>[] = Array.from({ length: 100 }, (_, i
 );
 
 describe('result.combineAll — 100 Ok results', () => {
-  bench('fp-core', () => {
+  bench('alchemy', () => {
     combineAll(OK_RESULTS);
   });
 
@@ -93,7 +93,7 @@ describe('result.combineAll — 100 Ok results', () => {
 });
 
 describe('result.combineAll — 100 results, 1 error at index 50', () => {
-  bench('fp-core', () => {
+  bench('alchemy', () => {
     combineAll(MIXED_RESULTS);
   });
 

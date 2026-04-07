@@ -21,11 +21,7 @@ export const toOption = <T, E>(result: Result<T, E>): Option<T> =>
 
 /**
  * Converts Result<T, E> to Option<T>, discarding the error.
- * Alias for {@link toOption}.
- *
- * @example
- * resultToOption(Ok(42))      // Some(42)
- * resultToOption(Err('oops')) // None
+ * @deprecated Use {@link toOption} instead.
  */
 export const resultToOption = toOption;
 
